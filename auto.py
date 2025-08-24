@@ -9,8 +9,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 
 # Load credentials
-username_value = os.environ["ELKO_USERNAME"]
-password_value = os.environ["ELKO_PASSWORD"]
+username_value = os.environ["USERNAME"]
+password_value = os.environ["PASSWORD"]
 
 def automatizacia():
     print("🤖 Spúšťam automatizáciu...")
