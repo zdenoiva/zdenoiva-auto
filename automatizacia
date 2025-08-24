@@ -56,7 +56,7 @@ jobs:
     - name: 🤖 Spustenie automatizácie
       run: |
         echo "🚀 Spúšťam automatizáciu..."
-        python automatizacia.py
+        python auto.py
         echo "✅ Automatizácia dokončená!"
         
     - name: 📸 Upload screenshots pri chybe
