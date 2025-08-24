@@ -64,7 +64,7 @@ def automatizacia():
         safe_wait((By.CLASS_NAME, "label-success"))
 
         # 6. CHECK STATUS AND ACT
-        status = driver.find_element(By.CLASS_NAME, "label-danger").text.strip()
+        status = driver.find_element(By.CLASS_NAME, "label-success").text.strip()
         print(f"📋 Aktuálny stav: {status}")
         if status == "Práca / Príchod":
             selector = "button.rdr-make-transaction[data-label='Práca / Odchod']"
