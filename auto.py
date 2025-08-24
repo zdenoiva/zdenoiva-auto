@@ -72,8 +72,17 @@ def automatizacia():
                     "//button[contains(@class,'rdr-make-transaction') and contains(text(),'Príchod')]"))
             )
             btn.click()
-            print("✅ Kliknuté na Príchod")
-            time.sleep(2)
+            print("✅ Kliknuté na Odchod")
+
+            # Čakáme na potvrďovací dialóg
+            WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.ID, "rdr-confirm-logout-btn"))
+            )
+        # Klikneme na potvrdiť a odhlásiť
+        driver.find_element(By.ID, "rdr-confirm-logout-btn").click()
+        print("✅ Potvrdené odhlásenie")
+        time.sleep(2)
+        driver.save_screenshot("po_odhlaseni.png")
             driver.save_screenshot("po_akcii.png")
 
         # 7. LOGOUT
