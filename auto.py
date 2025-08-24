@@ -61,7 +61,7 @@ def automatizacia():
 
         # 5. WAIT FOR DASHBOARD ELEMENT
         print("🔄 Čakám na dashboard...")
-        safe_wait((By.CLASS_NAME, "label label-success"))
+        safe_wait((By.CLASS_NAME, "label-success"))
 
         # 6. CHECK STATUS AND ACT
         status = driver.find_element(By.CLASS_NAME, "label-danger").text.strip()
