@@ -5,8 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
+import chromedriver_autoinstaller
 
 # Načítanie prihlasovacích údajov zo Secrets
 username_value = os.environ["USERNAME"]
@@ -15,20 +14,22 @@ password_value = os.environ["PASSWORD"]
 def automatizacia():
     print("🤖 Spúšťam automatizáciu...")
 
-    # 1. Nastavenie ChromeOptions
+    # 1. NASTAVENIE CHROME PREHLIADAČA
     options = Options()
     options.add_argument('--headless=new')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--disable-gpu')
     options.add_argument('--window-size=1920,1080')
+    options.add_argument(
+        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+        'AppleWebKit/537.36 (KHTML, like Gecko) '
+        'Chrome/91.0.4472.124 Safari/537.36'
+    )
 
-    # 2. Vynútené stiahnutie presnej verzie ChromeDriveru
-    driver_version = "139.0.7258.138"
-    print(f"Používam ChromeDriver verziu {driver_version}")
-    driver_path = ChromeDriverManager(driver_version).install()
-    service = Service(driver_path)
-
+    # 2. AUTOMATICKÉ STIAHNUTIE A INŠTALÁCIA kompatibilného ChromeDriveru
+    chromedriver_autoinstaller.install()  # stiahne verzia, ktorá zodpovedá lokálne nainštalovanému Chrome
+    
     # 3. Spustenie prehliadača
     driver = webdriver.Chrome(options=options)
 
