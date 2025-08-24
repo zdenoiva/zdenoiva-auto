@@ -1,0 +1,6 @@
+on:
+  schedule:
+    # Letný čas (CEST = UTC+2): apríl – október, pondelok–piatok o 16:20 CEST = 14:20 UTC
+    - cron: '20 14 * 4-10 1-5'
+    # Zimný čas (CET = UTC+1): november – marec, pondelok–piatok o 16:20 CET = 15:20 UTC
+    - cron: '20 15 * 11-3 1-5'
