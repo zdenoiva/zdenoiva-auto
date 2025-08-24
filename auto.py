@@ -67,19 +67,19 @@ def automatizacia():
         status = driver.find_element(By.CLASS_NAME, "label-danger").text.strip()
         print(f"📋 Aktuálny stav: {status}")
         if status == "Práca / Príchod":
+            selector = "button.rdr-make-transaction[data-label='Práca / Odchod']"
             btn = WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH,
-                    "//button[contains(@class,'rdr-make-transaction') and contains(text(),'Odchod')]"))
+            EC.element_to_be_clickable((By.CSS_SELECTOR, selector))
             )
             btn.click()
             print("✅ Kliknuté na Odchod")
 
             # Čakáme na potvrďovací dialóg
             WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((By.ID, "rdr-confirm-logout-btn"))
+                EC.element_to_be_clickable((By.ID, "rdr-confirm-btn"))
             )
             # Klikneme na potvrdiť a odhlásiť
-            driver.find_element(By.ID, "rdr-confirm-logout-btn").click()
+            driver.find_element(By.ID, "rdr-confirm-btn").click()
             print("✅ Potvrdený odchod")
 
         # 7. LOGOUT
