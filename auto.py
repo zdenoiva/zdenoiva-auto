@@ -78,12 +78,9 @@ def automatizacia():
             WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.ID, "rdr-confirm-logout-btn"))
             )
-        # Klikneme na potvrdiť a odhlásiť
-        driver.find_element(By.ID, "rdr-confirm-logout-btn").click()
-        print("✅ Potvrdené odhlásenie")
-        time.sleep(2)
-        driver.save_screenshot("po_odhlaseni.png")
-            driver.save_screenshot("po_akcii.png")
+            # Klikneme na potvrdiť a odhlásiť
+            driver.find_element(By.ID, "rdr-confirm-logout-btn").click()
+            print("✅ Potvrdený odchod")
 
         # 7. LOGOUT
         driver.get("https://webbox.elko.sk/logout")
