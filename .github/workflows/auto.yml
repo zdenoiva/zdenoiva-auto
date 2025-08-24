@@ -37,22 +37,20 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
+          
       - name: 🌐 Inštalácia Chrome
         run: |
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
 
-      - name: 🌐 Inštalácia kompatibilného ChromeDriveru
+      - name: 🌐 Inštalácia ChromeDriveru (fallback na najnovšiu verziu)
         run: |
-          # Odstránenie starého chromedriveru, ak existuje
+          # Odstránenie starého chromedriveru
           sudo rm -f /usr/local/bin/chromedriver /usr/bin/chromedriver
 
-          # Zadefinujte verziu presne podľa Chrome
-          CHROME_VERSION=$(google-chrome --version | grep -Po '[0-9]+\.[0-9]+\.[0-9]+')
-          MAJOR=${CHROME_VERSION%%.*}
-          DRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${MAJOR})
-          echo "Detected Chrome version $CHROME_VERSION, using Chromedriver $DRIVER_VERSION"
+          # Získanie najnovšej Chromedriver verzie (stabilná)
+          DRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE)
+          echo "Using Chromedriver version: $DRIVER_VERSION"
 
           # Stiahnutie a rozbalenie
           wget -q "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip"
