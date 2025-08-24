@@ -43,25 +43,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
 
-      - name: 🌐 Inštalácia ChromeDriveru (fallback na najnovšiu verziu)
-        run: |
-          # Odstránenie starého chromedriveru
-          sudo rm -f /usr/local/bin/chromedriver /usr/bin/chromedriver
-
-          # Získanie najnovšej Chromedriver verzie (stabilná)
-          DRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE)
-          echo "Using Chromedriver version: $DRIVER_VERSION"
-
-          # Stiahnutie a rozbalenie
-          wget -q "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip"
-          unzip chromedriver_linux64.zip
-          sudo mv chromedriver /usr/local/bin/chromedriver
-          sudo chmod +x /usr/local/bin/chromedriver
-
-          # Overenie
-          google-chrome --version
-          chromedriver --version
-
+      - name: 🌐 Inštalácia ChromeDriveru 
+        uses: seleniumhq/setup-chromedriver@v2
+        with:
+          browser: chrome
+        # Overenie
+           google-chrome --version
+           chromedriver --version
 
       - name: 🤖 Spustenie automatizácie
         run: |
