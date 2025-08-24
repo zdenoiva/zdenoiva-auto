@@ -1,63 +1,100 @@
 import os
 import time
+import chromedriver_autoinstaller
 from selenium import webdriver
+from selenium.common.exceptions import UnexpectedAlertPresentException, NoAlertPresentException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
-import chromedriver_autoinstaller
 
-# Načítanie prihlasovacích údajov zo Secrets
-username_value = os.environ["USERNAME"]
-password_value = os.environ["PASSWORD"]
+# Load credentials
+username_value = os.environ["ELKO_USERNAME"]
+password_value = os.environ["ELKO_PASSWORD"]
 
 def automatizacia():
     print("🤖 Spúšťam automatizáciu...")
 
-    # 1. NASTAVENIE CHROME PREHLIADAČA
+    # 1. ChromeOptions with media/camera disabled
     options = Options()
     options.add_argument('--headless=new')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--disable-gpu')
     options.add_argument('--window-size=1920,1080')
-    options.add_argument(
-        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-        'AppleWebKit/537.36 (KHTML, like Gecko) '
-        'Chrome/91.0.4472.124 Safari/537.36'
-    )
+    # Prevent camera/mic errors
+    options.add_argument('--use-fake-ui-for-media-stream')
+    options.add_argument('--use-fake-device-for-media-stream')
+    options.add_argument('--disable-media-stream')
 
-    # 2. AUTOMATICKÉ STIAHNUTIE A INŠTALÁCIA kompatibilného ChromeDriveru
-    chromedriver_autoinstaller.install()  # stiahne verzia, ktorá zodpovedá lokálne nainštalovanému Chrome
-    
-    # 3. Spustenie prehliadača
+    # 2. Auto-install matching ChromeDriver
+    chromedriver_autoinstaller.install()
+
+    # 3. Launch browser
     driver = webdriver.Chrome(options=options)
 
+    def safe_wait(locator, timeout=15):
+        """Wait and dismiss any unexpected alert before retrying."""
+        end = time.time() + timeout
+        while True:
+            try:
+                return WebDriverWait(driver, 1).until(EC.presence_of_element_located(locator))
+            except UnexpectedAlertPresentException:
+                try:
+                    alert = driver.switch_to.alert
+                    print(f"⚠️ Dismissing alert: {alert.text}")
+                    alert.dismiss()
+                except NoAlertPresentException:
+                    pass
+            except Exception:
+                if time.time() > end:
+                    raise
+
     try:
-        # PRIHLÁSENIE
+        # 4. LOGIN
+        print("📂 Otváram login stránku...")
         driver.get("https://webbox.elko.sk/logindispatcher")
-        WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.ID, "username")))
+        safe_wait((By.ID, "username"))
         driver.find_element(By.ID, "username").send_keys(username_value)
         driver.find_element(By.ID, "password").send_keys(password_value)
         driver.find_element(By.XPATH, "//button[@type='submit']").click()
 
-        # Čakanie na načítanie stavu
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "label-danger")))
-        status = driver.find_element(By.CLASS_NAME, "label-danger").text.strip()
-        print(f"📋 Stav: {status}")
+        # 5. WAIT FOR DASHBOARD ELEMENT
+        print("🔄 Čakám na dashboard...")
+        safe_wait((By.CLASS_NAME, "label-danger"))
 
-        # Ak “Práca / Príchod”, klik
+        # 6. CHECK STATUS AND ACT
+        status = driver.find_element(By.CLASS_NAME, "label-danger").text.strip()
+        print(f"📋 Aktuálny stav: {status}")
         if status == "Práca / Príchod":
             btn = WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Príchod')]"))
+                EC.element_to_be_clickable((By.XPATH,
+                    "//button[contains(@class,'rdr-make-transaction') and contains(text(),'Príchod')]"))
             )
             btn.click()
             print("✅ Kliknuté na Príchod")
             time.sleep(2)
+            driver.save_screenshot("po_akcii.png")
 
-        # Odhlásenie
+        # 7. LOGOUT
         driver.get("https://webbox.elko.sk/logout")
         print("✅ Odhlásenie dokončené")
+        driver.save_screenshot("po_odhlaseni.png")
+
+    except Exception as e:
+        print(f"❌ Chyba pri automatizácii: {e}")
+        try:
+            driver.save_screenshot("chyba_screenshot.png")
+            print("📸 Screenshot chyby uložený")
+        except:
+            pass
+        try:
+            with open("page_source_error.html", "w", encoding="utf-8") as f:
+                f.write(driver.page_source)
+            print("📄 HTML zdroj uložený")
+        except:
+            pass
+        raise
 
     finally:
         driver.quit()
