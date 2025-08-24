@@ -43,11 +43,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
 
-      - name: 🌐 Inštalácia ChromeDriveru 
-        uses: seleniumhq/setup-chromedriver@v2
-        with:
-          browser: chrome
-
       - name: 🤖 Spustenie automatizácie
         run: |
           echo "🚀 Spúšťam automatizáciu..."
