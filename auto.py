@@ -28,7 +28,7 @@ def automatizacia():
     )
     
         # 2. Spustenie prehliadača (systémový chromedriver)
-        driver = webdriver.Chrome(options=options)
+    driver = webdriver.Chrome(options=options)
     
     try:
         # ===========================================
