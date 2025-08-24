@@ -1,4 +1,5 @@
 import os
+import random
 import time
 import chromedriver_autoinstaller
 from selenium import webdriver
@@ -13,6 +14,11 @@ username_value = os.environ["USERNAME"]
 password_value = os.environ["PASSWORD"]
 
 def automatizacia():
+    # Náhodný delay 1–15 minút
+    delay_seconds = random.randint(60, 15 * 60)
+    minutes, seconds = divmod(delay_seconds, 60)
+    print(f"⏱ Čakám náhodne {minutes} minút(y) a {seconds} sekúnd pred prihlasením...")
+    time.sleep(delay_seconds)
     print("🤖 Spúšťam automatizáciu...")
 
     # 1. ChromeOptions with media/camera disabled
