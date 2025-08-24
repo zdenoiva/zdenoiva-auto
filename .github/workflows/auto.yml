@@ -38,7 +38,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-           - name: 🌐 Inštalácia Chrome a ChromeDriver
+      - name: 🌐 Inštalácia Chrome a ChromeDriver
         run: |
           sudo apt-get update
           # Inštalácia Google Chrome
