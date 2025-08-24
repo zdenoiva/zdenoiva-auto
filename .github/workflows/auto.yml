@@ -14,8 +14,8 @@ jobs:
   automatizacia:
     runs-on: ubuntu-latest
     env:
-      ELKO_USERNAME: ${{ secrets.ELKO_USERNAME }}
-      ELKO_PASSWORD: ${{ secrets.ELKO_PASSWORD }}
+      USERNAME: ${{ secrets.USERNAME }}
+      PASSWORD: ${{ secrets.PASSWORD }}
     steps:
       - name: 📦 Checkout kód
         uses: actions/checkout@v4
