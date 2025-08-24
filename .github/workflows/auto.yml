@@ -47,9 +47,6 @@ jobs:
         uses: seleniumhq/setup-chromedriver@v2
         with:
           browser: chrome
-        # Overenie
-           google-chrome --version
-           chromedriver --version
 
       - name: 🤖 Spustenie automatizácie
         run: |
