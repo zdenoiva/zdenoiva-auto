@@ -30,7 +30,7 @@ def automatizacia():
     service = Service(driver_path)
 
     # 3. Spustenie prehliadača
-    driver = webdriver.Chrome(service=service, options=options)
+    driver = webdriver.Chrome(options=options)
 
     try:
         # PRIHLÁSENIE
