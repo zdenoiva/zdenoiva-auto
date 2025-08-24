@@ -42,23 +42,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable unzip curl
-
-          # Overenie Chrome
-          google-chrome --version
-
-          # Získaj najnovší Chromedriver
+          sudo rm -f /usr/local/bin/chromedriver
           DRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE)
           echo "Using Chromedriver version: $DRIVER_VERSION"
-
-          # Stiahnutie a inštalácia Chromedriver
           wget -q "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip"
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/local/bin/chromedriver
           sudo chmod +x /usr/local/bin/chromedriver
-
-          # Overenie Chromedriver
+          google-chrome --version
           chromedriver --version
-
 
       - name: 🤖 Spustenie automatizácie
         run: |
