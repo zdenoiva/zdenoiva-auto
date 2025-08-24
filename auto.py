@@ -30,7 +30,14 @@ def automatizacia():
     )
     
         # 2. Spustenie prehliadača (systémový chromedriver)
-    service = Service(ChromeDriverManager().install())
+    from webdriver_manager.core.utils import ChromeType
+    from webdriver_manager.chrome import ChromeDriverManager
+
+        # Získajte cestu k driveru vrátane koncového 'chromedriver'
+    driver_path = ChromeDriverManager(chrome_type=ChromeType.GOOGLE).install()
+    print(f"Driver path: {driver_path}")
+    service = Service(driver_path)
+
     driver = webdriver.Chrome(service=service, options=options)
     
     try:
