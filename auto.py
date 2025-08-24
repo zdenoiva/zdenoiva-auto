@@ -69,7 +69,7 @@ def automatizacia():
         if status == "Práca / Príchod":
             btn = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH,
-                    "//button[contains(@class,'rdr-make-transaction') and contains(text(),'Príchod')]"))
+                    "//button[contains(@class,'rdr-make-transaction') and contains(text(),'Odchod')]"))
             )
             btn.click()
             print("✅ Kliknuté na Odchod")
