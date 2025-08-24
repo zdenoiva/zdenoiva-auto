@@ -38,10 +38,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 🌐 Inštalácia Chrome
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
+      - name: Set up Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: '139.0.7258.127'
+
+      - name: Set up ChromeDriver
+        uses: browser-actions/setup-chromedriver@v1
+        with:
+          chromedriver-version: '139.0.7258.138'
 
       - name: 🤖 Spustenie automatizácie
         run: |
