@@ -38,19 +38,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 🌐 Inštalácia Chrome a ChromeDriver
+           - name: 🌐 Inštalácia Chrome a ChromeDriver
         run: |
-          # Aktualizácia apt
           sudo apt-get update
-
           # Inštalácia Google Chrome
           wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
           echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
           sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
-
+          sudo apt-get install -y google-chrome-stable chromium-chromedriver
+          
           # Overenie inštalácie
           google-chrome --version
+          chromium-chromedriver --version
 
       - name: 🤖 Spustenie automatizácie
         run: |
