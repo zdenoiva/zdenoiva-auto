@@ -38,15 +38,32 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Set up Chrome
-        uses: browser-actions/setup-chrome@v1
-        with:
-          chrome-version: '139.0.7258.127'
+      - name: 🌐 Inštalácia Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
 
-      - name: Set up ChromeDriver
-        uses: browser-actions/setup-chromedriver@v1
-        with:
-          chromedriver-version: '139.0.7258.138'
+      - name: 🌐 Inštalácia kompatibilného ChromeDriveru
+        run: |
+          # Odstránenie starého chromedriveru, ak existuje
+          sudo rm -f /usr/local/bin/chromedriver /usr/bin/chromedriver
+
+          # Zadefinujte verziu presne podľa Chrome
+          CHROME_VERSION=$(google-chrome --version | grep -Po '[0-9]+\.[0-9]+\.[0-9]+')
+          MAJOR=${CHROME_VERSION%%.*}
+          DRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${MAJOR})
+          echo "Detected Chrome version $CHROME_VERSION, using Chromedriver $DRIVER_VERSION"
+
+          # Stiahnutie a rozbalenie
+          wget -q "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip"
+          unzip chromedriver_linux64.zip
+          sudo mv chromedriver /usr/local/bin/chromedriver
+          sudo chmod +x /usr/local/bin/chromedriver
+
+          # Overenie
+          google-chrome --version
+          chromedriver --version
+
 
       - name: 🤖 Spustenie automatizácie
         run: |
