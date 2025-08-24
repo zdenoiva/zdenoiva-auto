@@ -38,23 +38,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 🌐 Inštalácia Chrome a ChromeDriver
+      - name: 🌐 Inštalácia Chrome
         run: |
           sudo apt-get update
-          sudo apt-get install -y google-chrome-stable unzip curl
-          sudo rm -f /usr/local/bin/chromedriver
-          sudo rm -f /usr/bin/chromedriver
-          DRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE)
-          echo "Using Chromedriver version: $DRIVER_VERSION"
-          wget -q "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip"
-          unzip chromedriver_linux64.zip
-          sudo mv chromedriver /usr/local/bin/chromedriver
-          sudo chmod +x /usr/local/bin/chromedriver
-          echo "/usr/local/bin" | sudo tee /etc/paths.d/chromedriver
-          export PATH="/usr/local/bin:$PATH"
-          google-chrome --version
-          which chromedriver
-          chromedriver --version
+          sudo apt-get install -y google-chrome-stable
 
       - name: 🤖 Spustenie automatizácie
         run: |
