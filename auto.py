@@ -7,7 +7,8 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 import os
-
+username_value = os.environ.get("USERNAME")
+password_value = os.environ.get("PASSWORD")
 def automatizacia():
     print("🤖 Spúšťam automatizáciu...")
     
@@ -49,13 +50,13 @@ def automatizacia():
         # Nájdi a vyplň pole pre používateľské meno
         username_field = driver.find_element(By.ID, "username")
         username_field.clear()
-        username_field.send_keys("REDACTED")  # Vaše používateľské meno
+        username_field.send_keys(username_value)  # Vaše používateľské meno
         print("✅ Používateľské meno vyplnené")
         
         # Nájdi a vyplň pole pre heslo
         password_field = driver.find_element(By.ID, "password")
         password_field.clear()
-        password_field.send_keys("REDACTED")  # Vaše heslo
+        password_field.send_keys(password_value)  # Vaše heslo
         print("✅ Heslo vyplnené")
         
         # Nájdi a klikni na tlačidlo prihlásenia
