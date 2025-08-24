@@ -27,11 +27,8 @@ def automatizacia():
         'Chrome/91.0.4472.124 Safari/537.36'
     )
     
-    # 2. Inštalácia ChromeDriver cez webdriver-manager
-    service = Service(ChromeDriverManager().install())
-    
-    # 3. Spustenie prehliadača
-    driver = webdriver.Chrome(service=service, options=options)
+        # 2. Spustenie prehliadača (systémový chromedriver)
+        driver = webdriver.Chrome(options=options)
     
     try:
         # ===========================================
