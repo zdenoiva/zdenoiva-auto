@@ -26,6 +26,7 @@ def automatizacia():
     # 2. Vynútené stiahnutie presnej verzie ChromeDriveru
     driver_version = "139.0.7258.138"
     print(f"Používam ChromeDriver verziu {driver_version}")
+    driver_path = ChromeDriverManager(driver_version).install()
     service = Service(ChromeDriverManager(version=driver_version).install())
 
     # 3. Spustenie prehliadača
