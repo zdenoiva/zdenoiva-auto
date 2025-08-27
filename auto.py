@@ -14,8 +14,8 @@ username_value = os.environ["USERNAME"]
 password_value = os.environ["PASSWORD"]
 
 def automatizacia():
-    # Náhodný delay 1–15 minút
-    delay_seconds = random.randint(60, 15 * 60)
+    # Náhodný delay 1–5 minút
+    delay_seconds = random.randint(60, 5 * 60)
     minutes, seconds = divmod(delay_seconds, 60)
     print(f"⏱ Čakám náhodne {minutes} minút(y) a {seconds} sekúnd pred prihlasením...")
     time.sleep(delay_seconds)
