@@ -32,7 +32,14 @@ def automatizacia():
     options.add_argument('--use-fake-ui-for-media-stream')
     options.add_argument('--use-fake-device-for-media-stream')
     options.add_argument('--disable-media-stream')
-
+    # **Disable geolocation completely**
+    options.add_argument('--disable-geolocation')
+    options.add_argument('--deny-permission-prompts')
+    # Alternative: Set geolocation preferences
+    prefs = {
+        "profile.default_content_setting_values.geolocation": 2  # 0=Ask, 1=Allow, 2=Block
+    }
+    options.add_experimental_option("prefs", prefs)
     # 2. Auto-install matching ChromeDriver
     chromedriver_autoinstaller.install()
 
