@@ -3,21 +3,21 @@ name: automatizácia
 on:
   schedule:
     # Zimný čas: január - február
-    - cron: '20 15 * 1-2 1-5'
+    - cron: '15 15 * 1-2 1-5'
     
     # Marec: zmiešané (do 30.3 zimný, potom letný)
-    - cron: '20 15 1-29 3 1-5'    # do 29. marca zimný čas
-    - cron: '20 14 30-31 3 1-5'   # od 30. marca letný čas
+    - cron: '15 15 1-29 3 1-5'    # do 29. marca zimný čas
+    - cron: '15 14 30-31 3 1-5'   # od 30. marca letný čas
     
     # Letný čas: apríl - september  
-    - cron: '20 14 * 4-9 1-5'
+    - cron: '15 14 * 4-9 1-5'
     
     # Október: zmiešané (do 26.10 letný, potom zimný)
-    - cron: '20 14 1-26 10 1-5'   # do 26. októbra letný čas
-    - cron: '20 15 27-31 10 1-5'  # od 27. októbra zimný čas
+    - cron: '15 14 1-26 10 1-5'   # do 26. októbra letný čas
+    - cron: '15 15 27-31 10 1-5'  # od 27. októbra zimný čas
     
     # Zimný čas: november - december
-    - cron: '20 15 * 11-12 1-5'
+    - cron: '15 15 * 11-12 1-5'
   workflow_dispatch:
 
 jobs:
