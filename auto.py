@@ -21,7 +21,7 @@ def automatizacia():
     time.sleep(delay_seconds)
     print("🤖 Spúšťam automatizáciu...")
 
-    # 1. ChromeOptions with media/camera disabled
+    # 1. ChromeOptions with media/camera disabled + geolocation blocked
     options = Options()
     options.add_argument('--headless=new')
     options.add_argument('--no-sandbox')
@@ -35,11 +35,19 @@ def automatizacia():
     # **Disable geolocation completely**
     options.add_argument('--disable-geolocation')
     options.add_argument('--deny-permission-prompts')
-    # Alternative: Set geolocation preferences
+    # **Disable camera and microphone completely**
+    options.add_argument('--disable-permissions-api')
+    options.add_argument('--disable-user-media-security')
+    # Complete preferences for blocking camera, microphone, and geolocation
     prefs = {
-        "profile.default_content_setting_values.geolocation": 2  # 0=Ask, 1=Allow, 2=Block
+        "profile.default_content_setting_values.geolocation": 2,                    # 0=Ask, 1=Allow, 2=Block
+        "profile.default_content_setting_values.media_stream_mic": 2,               # Block microphone
+        "profile.default_content_setting_values.media_stream_camera": 2,            # Block camera
+        "profile.default_content_setting_values.media_stream": 2,                   # Block media stream
+        "profile.default_content_setting_values.notifications": 2                   # Block notifications
     }
     options.add_experimental_option("prefs", prefs)
+
     # 2. Auto-install matching ChromeDriver
     chromedriver_autoinstaller.install()
 
