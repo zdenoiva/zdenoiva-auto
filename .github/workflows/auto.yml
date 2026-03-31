@@ -58,12 +58,12 @@ jobs:
 
 
       - name: 📸 Upload screenshots pri chybe
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: error-screenshots
           path: "*.png"
-          retention-days: 7
+          retention-days: 14
 
       - name: 📄 Upload HTML súborov pri chybe
         if: failure()
