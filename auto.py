@@ -14,6 +14,7 @@ username_value = os.environ["USERNAME"]
 password_value = os.environ["PASSWORD"]
 
 def automatizacia():
+    chromedriver_autoinstaller.install()
     # Náhodný delay 1–5 minút
     delay_seconds = random.randint(60, 5 * 60)
     minutes, seconds = divmod(delay_seconds, 60)
@@ -49,7 +50,7 @@ def automatizacia():
     options.add_experimental_option("prefs", prefs)
 
     # 2. Auto-install matching ChromeDriver
-    chromedriver_autoinstaller.install()
+    # chromedriver_autoinstaller.install()
 
     # 3. Launch browser
     driver = webdriver.Chrome(options=options)
@@ -87,21 +88,43 @@ def automatizacia():
         # 6. CHECK STATUS AND ACT
         status = driver.find_element(By.CLASS_NAME, "label-success").text.strip()
         print(f"📋 Aktuálny stav: {status}")
+        driver.save_screenshot("dashboard_stav.png")
         if status == "Práca / Príchod":
             selector = "button.rdr-make-transaction[data-label='Práca / Odchod']"
-            btn = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, selector))
-            )
-            btn.click()
-            print("✅ Kliknuté na Odchod")
 
-            # Čakáme na potvrďovací dialóg
-            WebDriverWait(driver, 10).until(
+            # Čakaj na viditeľnosť + scroll do view
+            btn = WebDriverWait(driver, 15).until(
+                EC.visibility_of_element_located((By.CSS_SELECTOR, selector))
+            )
+            driver.execute_script("arguments[0].scrollIntoView(true);", btn)
+            time.sleep(0.5)
+
+            # Klik — pri zlyhaní fallback na JS click
+            try:
+                WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, selector))
+                ).click()
+            except Exception:
+                print("⚠️ Štandardný klik zlyhal, skúšam JS click...")
+                driver.execute_script("arguments[0].click();", btn)
+
+            print("✅ Kliknuté na Odchod")
+            driver.save_screenshot("po_kliknuti_odchod.png")  # debug screenshot
+
+            # Potvrdenie
+            confirm_btn = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.ID, "rdr-confirm-btn"))
             )
-            # Klikneme na potvrdiť a odhlásiť
-            driver.find_element(By.ID, "rdr-confirm-btn").click()
+            confirm_btn.click()
             print("✅ Potvrdený odchod")
+
+        elif status == "Spracovaná":
+            print("ℹ️ Stav je 'Spracovaná' — odchod bol už zaznamenaný skôr")
+
+        else:
+            driver.save_screenshot("neocakavany_stav.png")
+            raise Exception(f"⚠️ Neočakávaný stav: '{status}' — job nič nevykonal!")
+
 
         # 7. LOGOUT
         driver.get("https://webbox.elko.sk/logout")
