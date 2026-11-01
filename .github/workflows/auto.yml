@@ -2,80 +2,60 @@ name: automatizácia
 
 on:
   schedule:
-    - cron: '30 14,15 * * *'  # 14:30 a 15:30 UTC denne (pokryje CET aj CEST)
+    # GitHub nespúšťa cron presne — bežne mešká hodiny a meškanie sa mení.
+    # Preto je tu 14 pokusov denne (10:00–16:30 UTC). Skutočný zápis urobí len
+    # ten beh, ktorý naštartuje medzi 16:30 a 22:45 miestneho času; ostatné
+    # skončia hneď a bez akcie. Podrobnosti v auto.py.
+    - cron: '*/30 10-16 * * *'
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Len načítať stav, nič nezapisovať'
+        type: boolean
+        default: false
 
+permissions:
+  contents: read
+
+# Dva behy naraz nemajú zmysel — druhý by len videl už zapísaný odchod.
+concurrency:
+  group: webbox-odchod
+  cancel-in-progress: false
 
 jobs:
-  automatizacia:
+  odchod:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     env:
       USERNAME: ${{ secrets.USERNAME }}
       PASSWORD: ${{ secrets.PASSWORD }}
+      DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
     steps:
       - name: 📦 Checkout kód
         uses: actions/checkout@v4
 
-      - name: 🐍 Nastavenie Python 3.11
-        uses: actions/setup-python@v4
+      - name: 🐍 Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
 
-      - name: 💾 Cache pip packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: 📋 Inštalácia Python závislostí
+      - name: 📋 Závislosti
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          
-      - name: 🌐 Inštalácia Chrome
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
 
-      - name: 🤖 Spustenie automatizácie
-        run: |
-          echo "🚀 Kontrola času v Europe/Bratislava..."
-          HOUR=$(TZ='Europe/Bratislava' date +%H)
-          MIN=$(TZ='Europe/Bratislava' date +%M)
-          TIME="${HOUR}${MIN}"
-          echo "Lokálny čas: ${HOUR}:${MIN}"
-    
-          if [ "$TIME" \< "1630" ]; then
-            echo "❌ Je menej ako 16:30 v SK čase, končím bez spustenia jobu."
-            exit 0
-          fi
-    
-          echo "✅ Je >= 16:30 v SK čase, spúšťam..."
-          python auto.py
-          echo "✅ Automatizácia dokončená!"
+      - name: 🤖 Odchod
+        run: python -u auto.py
 
-
-      - name: 📸 Upload screenshots pri chybe
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: error-screenshots
-          path: "*.png"
-          retention-days: 14
-
-      - name: 📄 Upload HTML súborov pri chybe
+      - name: 📸 Diagnostika pri chybe
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: error-html
-          path: "*.html"
+          name: diagnostika
+          path: |
+            *.png
+            *.html
           retention-days: 7
-
-      - name: ✅ Úspešné dokončenie
-        if: success()
-        run: |
-          echo "🎉 Automatizácia úspešne dokončená!"
-          echo "📅 Čas: $(date)"
-          echo "📊 Využitie GitHub Actions minút: ~2-3 minúty"
+          if-no-files-found: ignore
