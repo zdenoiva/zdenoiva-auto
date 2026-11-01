@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """Založí (alebo aktualizuje) dve úlohy na cron-job.org pre automatizáciu odchodu.
 
-Úloha 1 — každý deň o 03:00 zapne workflow na GitHube. To obchádza pravidlo,
+Úloha 1 - každý deň o 03:00 zapne workflow na GitHube. To obchádza pravidlo,
             ktoré vypne plánované workflow v public repe po 60 dňoch bez aktivity.
-Úloha 2 — každý deň o 16:31 a 17:31 (bratislavský čas) spustí workflow cez API,
+Úloha 2 - každý deň o 16:31 a 17:31 (bratislavský čas) spustí workflow cez API,
             takže odchod nepadá na čas, ktorý vyberie GitHub, ale na 16:31 + náhodu.
 
 Potrebuje dve premenné prostredia:
   GITHUB_TOKEN     fine-grained PAT, len repo zdenoiva-auto, právo Actions: Read and write
-  CRONJOB_API_KEY  API kľúč z cron-job.org (Settings → API key)
+  CRONJOB_API_KEY  API kľúč z cron-job.org (Settings -> API key)
 
 Použitie (PowerShell):
   $env:GITHUB_TOKEN    = "github_pat_..."
   $env:CRONJOB_API_KEY = "..."
   python tools/nastav_cron.py
 
-Skript je idempotentný — opakované spustenie úlohy upraví, nie zduplikuje.
+Skript je idempotentný - opakované spustenie úlohy upraví, nie zduplikuje.
 """
 
 import json
@@ -24,13 +24,18 @@ import sys
 import urllib.error
 import urllib.request
 from datetime import datetime
-from zoneinfo import ZoneInfo
+
+# Konzola na Windows nemusí zvládnuť všetky znaky - nech to nespadne kvôli výpisu.
+for stream in (sys.stdout, sys.stderr):
+    try:
+        stream.reconfigure(errors="replace")
+    except (AttributeError, OSError):
+        pass
 
 GITHUB_API = "https://api.github.com"
 REPO = "zdenoiva/zdenoiva-auto"
 WORKFLOW = "auto.yml"
 CRON_API = "https://api.cron-job.org"
-TZ = ZoneInfo("Europe/Bratislava")
 
 
 def request(method, url, headers, payload=None):
@@ -60,7 +65,7 @@ def ulohy(token):
     }
     return [
         {
-            "title": "webbox: zapni workflow (proti 60-dňovému vypnutiu)",
+            "title": "webbox: zapni workflow (proti 60-dnovemu vypnutiu)",
             "url": f"{GITHUB_API}/repos/{REPO}/actions/workflows/{WORKFLOW}/enable",
             "requestMethod": 4,  # PUT
             "enabled": True,
@@ -84,10 +89,7 @@ def ulohy(token):
             "saveResponses": True,
             "notification": notifikacia,
             "extendedData": {
-                "headers": {
-                    **hlavicky,
-                    "Content-Type": "application/json",
-                },
+                "headers": {**hlavicky, "Content-Type": "application/json"},
                 "body": json.dumps({"ref": "main"}),
             },
             "schedule": {
@@ -106,7 +108,7 @@ def main():
     token = os.environ.get("GITHUB_TOKEN", "").strip()
     kluc = os.environ.get("CRONJOB_API_KEY", "").strip()
     if not token or not kluc:
-        print("❌ Nastav GITHUB_TOKEN a CRONJOB_API_KEY.")
+        print("CHYBA: nastav GITHUB_TOKEN a CRONJOB_API_KEY.")
         return 1
 
     gh = {
@@ -120,13 +122,13 @@ def main():
         "PUT", f"{GITHUB_API}/repos/{REPO}/actions/workflows/{WORKFLOW}/enable", gh
     )
     if stav not in (200, 204):
-        print(f"❌ GitHub token nefunguje (HTTP {stav}) — chýba právo Actions: Read and write?")
+        print(f"CHYBA: GitHub token nefunguje (HTTP {stav}) - chyba pravo Actions: Read and write?")
         return 1
-    print("✅ GitHub token funguje a workflow je aktívny.")
+    print("OK: GitHub token funguje a workflow je aktivny.")
 
     stav, zoznam = request("GET", f"{CRON_API}/jobs", cron)
     if stav != 200:
-        print(f"❌ cron-job.org API odmietlo kľúč (HTTP {stav}): {zoznam}")
+        print(f"CHYBA: cron-job.org API odmietlo kluc (HTTP {stav}): {zoznam}")
         return 1
     existujuce = {u.get("title"): u.get("jobId") for u in zoznam.get("jobs", [])}
 
@@ -135,30 +137,30 @@ def main():
         if nazov in existujuce:
             cislo = existujuce[nazov]
             stav, _ = request("PATCH", f"{CRON_API}/jobs/{cislo}", cron, {"job": uloha})
-            print(f"{'✅' if stav == 200 else '❌'} upravená úloha „{nazov}“ (id {cislo}, HTTP {stav})")
+            print(f"{'OK' if stav == 200 else 'CHYBA'}: upravena uloha '{nazov}' (id {cislo}, HTTP {stav})")
         else:
             stav, odpoved = request("PUT", f"{CRON_API}/jobs", cron, {"job": uloha})
             ok = stav == 200
             print(
-                f"{'✅' if ok else '❌'} založená úloha „{nazov}“ "
+                f"{'OK' if ok else 'CHYBA'}: zalozene uloha '{nazov}' "
                 f"(HTTP {stav}{'' if ok else ': ' + str(odpoved)})"
             )
 
     stav, zoznam = request("GET", f"{CRON_API}/jobs", cron)
     if stav == 200:
-        print("\nPrehľad úloh:")
+        print("\nPrehlad uloh:")
         for u in zoznam.get("jobs", []):
             dalsie = u.get("nextExecution") or 0
             kedy = (
-                datetime.fromtimestamp(dalsie, TZ).strftime("%d.%m.%Y %H:%M")
+                datetime.fromtimestamp(dalsie).strftime("%d.%m.%Y %H:%M")
                 if dalsie
-                else "—"
+                else "-"
             )
-            print(f"  • {u.get('title')} (id {u.get('jobId')}) — najbližšie: {kedy}")
+            print(f"  * {u.get('title')} (id {u.get('jobId')}) - najblizsie: {kedy}")
 
     print(
-        "\nSkontroluj to v konzole cron-job.org: otvor úlohu „webbox: odchod“ a klikni "
-        "na Test run. Očakávaná odpoveď je HTTP 204 (prázdne telo)."
+        "\nSkontroluj to v konzole cron-job.org: otvor ulohu 'webbox: odchod' a klikni "
+        "na Test run. Ocakavana odpoved je HTTP 204 s prazdnym telom."
     )
     return 0
 
