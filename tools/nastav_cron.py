@@ -18,6 +18,7 @@ Použitie (PowerShell):
 Skript je idempotentný - opakované spustenie úlohy upraví, nie zduplikuje.
 """
 
+import getpass
 import json
 import os
 import sys
@@ -104,11 +105,39 @@ def ulohy(token):
     ]
 
 
+GITHUB_PREFIXES = ("ghp_", "github_pat_", "gho_", "ghu_", "ghs_", "ghr_")
+
+
 def main():
     token = os.environ.get("GITHUB_TOKEN", "").strip()
     kluc = os.environ.get("CRONJOB_API_KEY", "").strip()
-    if not token or not kluc:
-        print("CHYBA: nastav GITHUB_TOKEN a CRONJOB_API_KEY.")
+
+    if not token:
+        if not sys.stdin.isatty():
+            print("CHYBA: chyba GITHUB_TOKEN a konzola nie je interaktivna.")
+            return 1
+        print("GitHub PAT (vstup sa nezobrazuje):")
+        token = getpass.getpass("  > ").strip()
+    if not kluc:
+        if not sys.stdin.isatty():
+            print("CHYBA: chyba CRONJOB_API_KEY a konzola nie je interaktivna.")
+            return 1
+        print("cron-job.org API kluc (vstup sa nezobrazuje):")
+        kluc = getpass.getpass("  > ").strip()
+
+    if not token or token.startswith("github_pat_..."):
+        print("CHYBA: GITHUB_TOKEN je prazdny alebo obsahuje iba ukazku 'github_pat_...'.")
+        print("       Vytvor PAT: https://github.com/settings/personal-access-tokens/new")
+        return 1
+    if not token.startswith(GITHUB_PREFIXES):
+        print("CHYBA: GITHUB_TOKEN nevyzera ako GitHub token (ma zacinat 'github_pat_' alebo 'ghp_').")
+        return 1
+    if kluc.startswith(GITHUB_PREFIXES):
+        print("CHYBA: CRONJOB_API_KEY obsahuje GitHub token, nie kluc z cron-job.org.")
+        print("       Kluc najdes v console.cron-job.org -> Settings -> API key.")
+        return 1
+    if not kluc:
+        print("CHYBA: chyba CRONJOB_API_KEY.")
         return 1
 
     gh = {
@@ -122,7 +151,7 @@ def main():
         "PUT", f"{GITHUB_API}/repos/{REPO}/actions/workflows/{WORKFLOW}/enable", gh
     )
     if stav not in (200, 204):
-        print(f"CHYBA: GitHub token nefunguje (HTTP {stav}) - chyba pravo Actions: Read and write?")
+        print(f"CHYBA: GitHub token nefunguje (HTTP {stav}) - chyba pravo Actions: Read and write na repo zdenoiva-auto?")
         return 1
     print("OK: GitHub token funguje a workflow je aktivny.")
 
