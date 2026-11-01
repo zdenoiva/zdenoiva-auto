@@ -25,7 +25,9 @@ concurrency:
 jobs:
   odchod:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # Náhodné oneskorenie je až 60 min, takže limit musí byť vyšší, inak by
+    # GitHub beh zabil skôr, než stihne zapísať odchod.
+    timeout-minutes: 75
     env:
       USERNAME: ${{ secrets.USERNAME }}
       PASSWORD: ${{ secrets.PASSWORD }}
