@@ -32,6 +32,26 @@ V *Settings → Secrets and variables → Actions* sú potrebné dva secrety:
 Manuálne spustenie: *Actions → automatizácia → Run workflow*, voliteľne s `dry_run`,
 ktorý sa len prihlási a vypíše stav, ale nič nezapíše.
 
+## Externý spúšťač (cron-job.org)
+
+GitHub plánované behy spúšťa oneskorene (bežne 1–4 hodiny) a v public repe ich po
+60 dňoch bez aktivity potichu vypne. Preto sa dá workflow spúšťať zvonku:
+
+- `tools/nastav_cron.py` založí na cron-job.org dve úlohy — jednu, ktorá každý deň
+  o 03:00 workflow zapne (proti 60-dňovému vypnutiu), a druhú, ktorá ho o 16:31 a 17:31
+  bratislavského času spustí cez API.
+
+Potrebné je vlastné fine-grained PAT (len tento repozitár, právo *Actions: Read and write*)
+a API kľúč z cron-job.org:
+
+```powershell
+$env:GITHUB_TOKEN    = "github_pat_..."
+$env:CRONJOB_API_KEY = "..."
+python tools/nastav_cron.py
+```
+
+Cron v `.github/workflows/auto.yml` zostáva ako záloha, keby externý spúšťač zlyhal.
+
 ## História
 
 Repo je verejné. Staršie verzie skriptu obsahovali prihlasovacie údaje natvrdo;
