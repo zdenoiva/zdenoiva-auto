@@ -4,11 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'check = ranná kontrola a mail, record = zapísať príchod'
+        description: 'check = ranná kontrola a mail, record = zapísať príchod, test = skúšobný mail'
         type: choice
         options:
           - check
           - record
+          - test
         default: check
       dry_run:
         description: 'Len overiť stav, nič neposielať a nič nezapisovať'

@@ -82,7 +82,7 @@ def prehliadac():
             log("🔒 Prehliadač zatvorený")
 
 
-def posli_mail(popis, cas):
+def posli_mail(popis, cas, test=False):
     link = os.environ.get("CONFIRM_URL", "").strip()
     if not link:
         raise RuntimeError("Chýba CONFIRM_URL — adresa Worker-a, ktorý zapisuje príchod.")
@@ -96,7 +96,7 @@ def posli_mail(popis, cas):
     komu = os.environ.get("MAIL_TO", "").strip() or pouzivatel
 
     dnes = datetime.now(TZ)
-    predmet = f"Príchod {dnes:%d.%m.} — si v práci?"
+    predmet = f"{'[TEST] ' if test else ''}Príchod {dnes:%d.%m.} — si v práci?"
 
     text = (
         f"Posledná transakcia v webBox: {popis} ({cas}).\n\n"
@@ -211,16 +211,25 @@ def zapis(teraz):
         return 0
 
 
+def test_mailu(teraz):
+    """Pošle ukážkový mail — na overenie SMTP a tlačidla, bez zásahu do webBoxu."""
+    posli_mail("Práca / Odchod", f"20:32:57 / {teraz:%d.%m.%Y}", test=True)
+    zhrnutie("- 🧪 testovací mail odoslaný")
+    return 0
+
+
 def main():
     from selenium.common.exceptions import TimeoutException
 
     rezim = (sys.argv[1] if len(sys.argv) > 1 else os.environ.get("REZIM", "check")).strip()
-    if rezim not in ("check", "record"):
-        print(f"Neznámy režim: {rezim} (čakám check alebo record)", file=sys.stderr)
+    if rezim not in ("check", "record", "test"):
+        print(f"Neznámy režim: {rezim} (čakám check, record alebo test)", file=sys.stderr)
         return 2
 
     teraz = datetime.now(TZ)
     try:
+        if rezim == "test":
+            return test_mailu(teraz)
         return kontrola(teraz) if rezim == "check" else zapis(teraz)
     except TimeoutException:
         log("❌ Niečo sa nenačítalo včas (prihlásenie alebo čítačka).")
