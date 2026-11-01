@@ -130,8 +130,8 @@ def ulohy(token):
             },
             "schedule": {
                 "timezone": "Europe/Bratislava",
-                "hours": [6],
-                "minutes": [50],
+                "hours": [7],
+                "minutes": [35],
                 "mdays": [-1],
                 "months": [-1],
                 "wdays": [1, 2, 3, 4, 5],  # pondelok-piatok

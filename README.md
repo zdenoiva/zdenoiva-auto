@@ -40,7 +40,7 @@ GitHub plánované behy spúšťa oneskorene (bežne 1–4 hodiny) a v public re
 
 - `tools/nastav_cron.py` založí na cron-job.org tri úlohy — jednu, ktorá každý deň
   o 03:00 workflow zapne (proti 60-dňovému vypnutiu), druhú, ktorá ho o 16:31 a 17:31
-  bratislavského času spustí cez API, a tretiu, ktorá v pracovné dni o 06:50 spustí
+  bratislavského času spustí cez API, a tretiu, ktorá v pracovné dni o 07:35 spustí
   rannú kontrolu príchodu.
 
 Potrebné je vlastné fine-grained PAT (len tento repozitár, právo *Actions: Read and write*)

@@ -39,7 +39,7 @@ from webbox import (
 
 # Kedy smie kontrola prebehnúť (ráno, pracovný deň).
 CHECK_OD = dtime(5, 30)
-CHECK_DO = dtime(7, 40)
+CHECK_DO = dtime(8, 0)
 
 # Dokedy smie platiť odkaz z mailu. Neskorší klik sa už nezapíše.
 RECORD_OD = dtime(5, 30)
