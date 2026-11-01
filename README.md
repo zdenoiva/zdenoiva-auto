@@ -42,13 +42,15 @@ GitHub plánované behy spúšťa oneskorene (bežne 1–4 hodiny) a v public re
   bratislavského času spustí cez API.
 
 Potrebné je vlastné fine-grained PAT (len tento repozitár, právo *Actions: Read and write*)
-a API kľúč z cron-job.org:
+a API kľúč z cron-job.org (*Settings → API key*):
 
 ```powershell
-$env:GITHUB_TOKEN    = "github_pat_..."
-$env:CRONJOB_API_KEY = "..."
 python tools/nastav_cron.py
 ```
+
+Skript si obe hodnoty vypýta sám a vstup sa nezobrazuje, takže sa nedostanú do histórie
+príkazov ani do žiadneho logu. Dajú sa zadať aj cez premenné prostredia `GITHUB_TOKEN`
+a `CRONJOB_API_KEY`.
 
 Cron v `.github/workflows/auto.yml` zostáva ako záloha, keby externý spúšťač zlyhal.
 
