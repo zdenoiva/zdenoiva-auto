@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Aplikacia" parent="android:Theme.Material.Light.DarkActionBar">
+        <item name="android:colorPrimary">@color/zelena</item>
+        <item name="android:colorPrimaryDark">@color/zelena_tmava</item>
+        <item name="android:colorAccent">@color/zelena</item>
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:actionBarStyle">@style/Aplikacia.Lista</item>
+    </style>
+
+    <style name="Aplikacia.Lista" parent="android:Widget.Material.ActionBar.Solid">
+        <item name="android:background">@color/zelena</item>
+        <item name="android:titleTextStyle">@style/Aplikacia.Lista.Nadpis</item>
+    </style>
+
+    <style name="Aplikacia.Lista.Nadpis" parent="android:TextAppearance.Material.Widget.ActionBar.Title">
+        <item name="android:textColor">#FFFFFF</item>
+    </style>
+</resources>

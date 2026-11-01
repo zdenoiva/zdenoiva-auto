@@ -81,7 +81,12 @@ Potrebné secrety (okrem `USERNAME` a `PASSWORD`):
 Samotný Worker je v `worker/prichod.js` — nasadenie a jeho dve premenné
 (`GH_TOKEN`, `SECRET`) sú popísané priamo v hlavičke toho súboru.
 
-## História
+## Android appka
 
+`android/` obsahuje malú appku **Dochádzka**, ktorá zobrazí webBox v prehliadači priamo
+v telefóne (na ručné zmeny stavov) a po prvom spustení si pamätá prihlasovacie údaje.
+Má jediné povolenie — internet. Podrobnosti a stavba APK: `android/README.md`.
+
+## História
 Repo je verejné. Staršie verzie skriptu obsahovali prihlasovacie údaje natvrdo;
 história bola prepísaná, aby v nej neboli. Ak máš starý klon, znova si ho naklonuj.
