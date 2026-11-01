@@ -17,7 +17,7 @@ Cron je `*/30 10-16 * * *` (UTC) — 14 pokusov denne, pretože GitHub plánovan
 spúšťa oneskorene a meškanie sa mení (bežne 1–4 hodiny).
 
 Zápis prebehne len vtedy, keď beh naštartuje medzi **16:30 a 22:45** bratislavského
-času, plus náhodné oneskorenie 0–15 minút. Vďaka viacerým pokusom sa odchod zapíše
+času, plus náhodné oneskorenie 0–60 minút. Vďaka viacerým pokusom sa odchod zapíše
 aj vtedy, keď sa prvý beh oneskorí; zároveň platí, že sa nezapíše dvakrát.
 
 ## Nastavenie

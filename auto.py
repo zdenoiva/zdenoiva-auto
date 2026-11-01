@@ -200,7 +200,7 @@ def main():
             hour=OKNO_DO.hour, minute=OKNO_DO.minute, second=0, microsecond=0
         )
         rezerva = int((koniec_okna - teraz).total_seconds()) - 120
-        cakanie = min(random.randint(0, 900), max(0, rezerva))
+        cakanie = min(random.randint(0, 3600), max(0, rezerva))
         if cakanie > 0:
             log(f"⏱ Čakám {cakanie // 60} min {cakanie % 60} s (náhodné oneskorenie).")
             time.sleep(cakanie)
