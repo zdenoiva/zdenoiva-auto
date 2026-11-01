@@ -37,6 +37,7 @@ for stream in (sys.stdout, sys.stderr):
 GITHUB_API = "https://api.github.com"
 REPO = "zdenoiva/zdenoiva-auto"
 WORKFLOW = "auto.yml"
+PRICHOD_WORKFLOW = "prichod.yml"
 CRON_API = "https://api.cron-job.org"
 
 
@@ -114,6 +115,26 @@ def ulohy(token):
                 "mdays": [-1],
                 "months": [-1],
                 "wdays": [-1],
+            },
+        },
+        {
+            "title": "webbox: ranna kontrola prichodu",
+            "url": f"{GITHUB_API}/repos/{REPO}/actions/workflows/{PRICHOD_WORKFLOW}/dispatches",
+            "requestMethod": 1,  # POST
+            "enabled": True,
+            "saveResponses": True,
+            "notification": notifikacia,
+            "extendedData": {
+                "headers": {**hlavicky, "Content-Type": "application/json"},
+                "body": json.dumps({"ref": "main", "inputs": {"mode": "check"}}),
+            },
+            "schedule": {
+                "timezone": "Europe/Bratislava",
+                "hours": [6],
+                "minutes": [50],
+                "mdays": [-1],
+                "months": [-1],
+                "wdays": [1, 2, 3, 4, 5],  # pondelok-piatok
             },
         },
     ]
