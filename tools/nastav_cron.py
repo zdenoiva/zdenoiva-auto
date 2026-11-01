@@ -22,6 +22,7 @@ import getpass
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.request
 from datetime import datetime
@@ -50,6 +51,19 @@ def request(method, url, headers, payload=None):
         return chyba.code, {"error": chyba.read().decode("utf-8", "replace")[:300]}
     except urllib.error.URLError as chyba:
         return 0, {"error": str(chyba)}
+
+
+def request_retry(method, url, headers, payload=None, pokusy=5):
+    """To iste ako request, ale pri HTTP 429 (limit cron-job.org) pocka a skusi znova."""
+    stav, telo = 0, {}
+    for pokus in range(pokusy):
+        stav, telo = request(method, url, headers, payload)
+        if stav != 429 or pokus == pokusy - 1:
+            return stav, telo
+        pauza = 5 * (pokus + 1)
+        print(f"  ... cron-job.org odmietol kvoli limitu (HTTP 429), cakam {pauza} s")
+        time.sleep(pauza)
+    return stav, telo
 
 
 def ulohy(token):
@@ -184,10 +198,10 @@ def main():
         nazov = uloha["title"]
         if nazov in existujuce:
             cislo = existujuce[nazov]
-            stav, _ = request("PATCH", f"{CRON_API}/jobs/{cislo}", cron, {"job": uloha})
+            stav, _ = request_retry("PATCH", f"{CRON_API}/jobs/{cislo}", cron, {"job": uloha})
             print(f"{'OK' if stav == 200 else 'CHYBA'}: upravena uloha '{nazov}' (id {cislo}, HTTP {stav})")
         else:
-            stav, odpoved = request("PUT", f"{CRON_API}/jobs", cron, {"job": uloha})
+            stav, odpoved = request_retry("PUT", f"{CRON_API}/jobs", cron, {"job": uloha})
             ok = stav == 200
             print(
                 f"{'OK' if ok else 'CHYBA'}: zalozene uloha '{nazov}' "
