@@ -3,13 +3,19 @@ package sk.zdenoiva.dochadzka;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,23 +37,57 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
 /**
  * Dochádzka — prihlásenie do webBox (ELKO) a zobrazenie virtuálnej čítačky.
  *
- * Appka nemá žiadne povolenia okrem internetu. WebView dostane všetky požiadavky
- * na kameru, mikrofón, GPS aj výber súborov rovno zamietnuté a nikdy sa na ne
- * nepýta — žiadne systémové okná, žiadne hlášky.
+ * Appka nemá prístup ku kamere, mikrofónu, GPS ani súborom. WebView dostane také
+ * požiadavky rovno zamietnuté a nikdy sa na ne nepýta.
+ *
+ * Z oznámenia „Si v práci?“ sa dá príchod zapísať jedným ťuknutím — appka pritom
+ * skontroluje stav a zapíše len vtedy, keď poslednou transakciou je odchod.
  */
 public class MainActivity extends Activity {
 
+    public static final String EXTRA_AKCIA = "akcia";
+    public static final String AKCIA_PRICHOD = "prichod";
+
     private static final String START_URL = "https://webbox.elko.sk/";
     private static final String LOGIN_URL = "logindispatcher";
-    private static final int MAX_POKUSOV = 3;
+    private static final int MAX_POKUSOV_PRIHLASENIA = 3;
+    private static final int ZIADOST_OZN = 11;
+
+    private static final String JS_STAV =
+            "(function(){"
+            + "var t=document.getElementById('rdr-last-transaction');"
+            + "if(!t)return 'cakam';"
+            + "var s=(t.innerText||'').replace(/\\s+/g,' ');"
+            + "if(s.indexOf('Príchod')>=0)return 'uz';"
+            + "if(s.indexOf('Odchod')<0)return 'ine';"
+            + "var a=document.querySelectorAll('button.rdr-make-transaction'),b=null,i,l;"
+            + "for(i=0;i<a.length;i++){l=a[i].getAttribute('data-label')||a[i].innerText||'';"
+            + "if(l.indexOf('Príchod')>=0){b=a[i];break;}}"
+            + "if(!b)return 'netlacidlo';"
+            + "b.click();return 'kliknute';"
+            + "})()";
+
+    private static final String JS_POTVRD =
+            "(function(){var b=document.getElementById('rdr-confirm-btn');"
+            + "if(!b)return 'nie';b.click();return 'ok';})()";
+
+    private static final String JS_TEXTOVA_STAV =
+            "(function(){var t=document.getElementById('rdr-last-transaction');"
+            + "return t?(t.innerText||'').replace(/\\s+/g,' '):'';})()";
 
     private SharedPreferences prefy;
     private WebView web;
+    private final Handler hlavny = new Handler(Looper.getMainLooper());
+
     private int pokusovOPrihlasenie = 0;
+
+    private boolean cakamNaPrichod = false;
+    private int pokusyOPrichod = 0;
 
     @Override
     protected void onCreate(Bundle stav) {
@@ -63,11 +103,39 @@ public class MainActivity extends Activity {
         getWindow().setBackgroundDrawable(new ColorDrawable(Color.WHITE));
 
         nastavWeb();
+        zvysPovolenieOznameni();
 
         if (prefy.getString("meno", "").isEmpty()) {
             vyziadajUdaje();
         } else {
             web.loadUrl(START_URL);
+            Planovac.naplanuj(this);
+        }
+
+        spracujZamer(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent zamer) {
+        super.onNewIntent(zamer);
+        setIntent(zamer);
+        spracujZamer(zamer);
+    }
+
+    private void spracujZamer(Intent zamer) {
+        if (zamer == null) return;
+        if (AKCIA_PRICHOD.equals(zamer.getStringExtra(EXTRA_AKCIA))) {
+            zamer.removeExtra(EXTRA_AKCIA);
+            spustiPrichod();
+        }
+    }
+
+    private void zvysPovolenieOznameni() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && checkSelfPermission("android.permission.POST_NOTIFICATIONS")
+                != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"},
+                    ZIADOST_OZN);
         }
     }
 
@@ -107,6 +175,9 @@ public class MainActivity extends Activity {
             @Override
             public void onPageFinished(WebView v, String adresa) {
                 prihlasAkTreba(adresa);
+                if (cakamNaPrichod && adresa != null && !adresa.contains(LOGIN_URL)) {
+                    skusPrichod();
+                }
             }
         });
 
@@ -131,7 +202,7 @@ public class MainActivity extends Activity {
                 return false;
             }
 
-            // Potvrdenia samotného webu (napr. "Zapísať odchod?") majú fungovať.
+            // Potvrdenia samotného webu (napr. „Zapísať odchod?“) majú fungovať.
             @Override
             public boolean onJsAlert(WebView v, String url, String sprava, final JsResult vysledok) {
                 new AlertDialog.Builder(MainActivity.this)
@@ -183,7 +254,7 @@ public class MainActivity extends Activity {
         String meno = prefy.getString("meno", "");
         String heslo = prefy.getString("heslo", "");
         if (meno.isEmpty() || heslo.isEmpty()) return;
-        if (pokusovOPrihlasenie >= MAX_POKUSOV) return;
+        if (pokusovOPrihlasenie >= MAX_POKUSOV_PRIHLASENIA) return;
         pokusovOPrihlasenie++;
 
         String js = "(function(){"
@@ -198,6 +269,121 @@ public class MainActivity extends Activity {
                 + "})()";
         web.evaluateJavascript(js, null);
     }
+
+    // ---------- zápis príchodu z oznámenia ----------
+
+    private void spustiPrichod() {
+        if (prefy.getString("meno", "").isEmpty()) {
+            cakamNaPrichod = true;
+            return;
+        }
+        cakamNaPrichod = true;
+        pokusyOPrichod = 0;
+        Toast.makeText(this, "Kontrolujem stav v webBoxe…", Toast.LENGTH_SHORT).show();
+
+        String adresa = web.getUrl();
+        if (adresa == null || !adresa.contains("elko.sk") || adresa.contains(LOGIN_URL)) {
+            web.loadUrl(START_URL);
+        } else {
+            skusPrichod();
+        }
+    }
+
+    private void skusPrichod() {
+        if (!cakamNaPrichod) return;
+        if (pokusyOPrichod >= 6) {
+            cakamNaPrichod = false;
+            oznam("Nepodarilo sa prečítať stav stránky.\nSkús to ručne v appke.");
+            return;
+        }
+        pokusyOPrichod++;
+
+        web.evaluateJavascript(JS_STAV, new ValueCallback<String>() {
+            public void onReceiveValue(String hodnota) {
+                String stav = dekoduj(hodnota);
+                if (stav.equals("kliknute")) {
+                    hlavny.postDelayed(new Runnable() {
+                        public void run() { potvrd(3); }
+                    }, 700);
+                } else if (stav.equals("uz")) {
+                    cakamNaPrichod = false;
+                    zrusOznam();
+                    oznam("Príchod už je zapísaný — nič netreba.");
+                } else if (stav.equals("ine")) {
+                    cakamNaPrichod = false;
+                    oznam("Posledná transakcia nie je odchod — nič som nezapísal.");
+                } else {
+                    hlavny.postDelayed(new Runnable() {
+                        public void run() { skusPrichod(); }
+                    }, 2000);
+                }
+            }
+        });
+    }
+
+    private void potvrd(final int zostava) {
+        web.evaluateJavascript(JS_POTVRD, new ValueCallback<String>() {
+            public void onReceiveValue(String hodnota) {
+                if (dekoduj(hodnota).equals("ok")) {
+                    hlavny.postDelayed(new Runnable() {
+                        public void run() { overPrichod(4); }
+                    }, 3000);
+                } else if (zostava > 0) {
+                    hlavny.postDelayed(new Runnable() {
+                        public void run() { potvrd(zostava - 1); }
+                    }, 800);
+                } else {
+                    cakamNaPrichod = false;
+                    oznam("Potvrdzovacie tlačidlo sa nenašlo.\nSkús to ručne v appke.");
+                }
+            }
+        });
+    }
+
+    private void overPrichod(final int zostava) {
+        web.evaluateJavascript(JS_TEXTOVA_STAV, new ValueCallback<String>() {
+            public void onReceiveValue(String hodnota) {
+                String text = dekoduj(hodnota);
+                if (text.contains("Príchod")) {
+                    cakamNaPrichod = false;
+                    zrusOznam();
+                    oznam("✅ Príchod zapísaný.\n" + text);
+                } else if (zostava > 0) {
+                    hlavny.postDelayed(new Runnable() {
+                        public void run() { overPrichod(zostava - 1); }
+                    }, 2500);
+                } else {
+                    cakamNaPrichod = false;
+                    oznam("Zápis sa nepotvrdil.\nPosledná transakcia: " + text);
+                }
+            }
+        });
+    }
+
+    private static String dekoduj(String json) {
+        if (json == null || json.equals("null")) return "";
+        try {
+            Object hodnota = new JSONTokener(json).nextValue();
+            return hodnota == null ? "" : hodnota.toString();
+        } catch (Exception e) {
+            return json.replace("\"", "");
+        }
+    }
+
+    private void zrusOznam() {
+        NotificationManager spravca =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (spravca != null) spravca.cancel(Budik.OZN_DEN);
+    }
+
+    private void oznam(String sprava) {
+        new AlertDialog.Builder(this)
+                .setMessage(sprava)
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
+    // ---------- prihlásenie a menu ----------
 
     private void vyziadajUdaje() {
         final float hustota = getResources().getDisplayMetrics().density;
@@ -248,6 +434,7 @@ public class MainActivity extends Activity {
                                 prefy.edit().putString("meno", m).putString("heslo", h).apply();
                                 pokusovOPrihlasenie = 0;
                                 dialog.dismiss();
+                                Planovac.naplanuj(MainActivity.this);
                                 web.loadUrl(START_URL);
                             }
                         });

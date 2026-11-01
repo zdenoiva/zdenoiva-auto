@@ -5,13 +5,22 @@ prihlasovacie údaje, aby sa prihlásila sama.
 
 ## Vlastnosti
 
-- Jediné povolenie v manifeste je `INTERNET`. Žiadna kamera, poloha, súbory, notifikácie.
-- WebView dostane požiadavky na kameru, mikrofón, GPS aj výber súborov **rovno zamietnuté
-  a potichu** — nikdy sa nezobrazí systémové okno ani hláška.
+- Zobrazí webBox v prehliadači priamo v telefóne — stavy sa dajú meniť ručne.
+- **Ranné oznámenie**: v pracovný deň o 07:35 príde oznámenie *„Si v práci?“* s tlačidlom
+  *Zapíš príchod*. Appka pri ťuknutí skontroluje poslednú transakciu a zapíše príchod len
+  vtedy, keď je poslednou transakciou odchod. Ak už príchod máš, len to oznámi.
+- Prihlasovacie údaje si pamätá, prihlási sa samo vrátane obnovenia vypršanej session.
 - Pustí len `elko.sk` a jeho subdomény; `tel:`, `mailto:` a cudzie odkazy potichu zablokuje.
-- Prihlásenie sa ukladá do súkromného úložiska appky (`SharedPreferences`), zálohovanie
-  appky je vypnuté (`allowBackup=false`), takže sa nedostane do cloudu.
-- Menu (⋮): *Obnoviť* a *Zmeniť prihlásenie* (zmaže údaje aj cookies).
+- Prihlásenie je v súkromnom úložisku appky (`SharedPreferences`), zálohovanie vypnuté.
+
+## Povolenia
+
+- `INTERNET` — jediné, ktoré appka naozaj potrebuje.
+- `POST_NOTIFICATIONS` — kvôli rannému oznámeniu (Android 13+ sa naň raz spýta).
+- `RECEIVE_BOOT_COMPLETED` — aby sa oznámenie po reštarte naplánovalo znova (bez otázky).
+
+Kameru, mikrofón, polohu ani súbory appka nemá. WebView dostane také požiadavky **rovno
+zamietnuté a potichu** — nikdy sa nezobrazí systémové okno ani hláška.
 
 ## Stavba APK
 

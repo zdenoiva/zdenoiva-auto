@@ -28,7 +28,7 @@ Write-Host "2/6 balík a R.java (aapt2 link)"
     -I $androidJar `
     --manifest (Join-Path $proj "AndroidManifest.xml") `
     --java "$out\gen" `
-    --min-sdk-version 23 `
+    --min-sdk-version 26 `
     --target-sdk-version 34 `
     "$out\res.zip"
 if ($LASTEXITCODE -ne 0) { throw "aapt2 link zlyhal" }
