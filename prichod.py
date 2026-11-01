@@ -54,6 +54,15 @@ def pracovny_den(teraz):
     return teraz.weekday() < 5
 
 
+def brana(teraz, od, do):
+    """Vráti dôvod, prečo sa nemá nič robiť, alebo None."""
+    if not pracovny_den(teraz):
+        return f"víkend ({teraz:%d.%m.})"
+    if not v_okne(teraz, od, do):
+        return f"mimo okna {od:%H:%M}–{do:%H:%M} ({teraz:%H:%M})"
+    return None
+
+
 @contextmanager
 def prehliadac():
     """Prehliadač, ktorý sa vždy zavrie; pri chybe uloží diagnostiku."""
@@ -135,14 +144,13 @@ def posli_mail(popis, cas):
 
 def kontrola(teraz):
     """Zistí stav a prípadne pošle mail. Nič nezapisuje."""
-    if not pracovny_den(teraz):
-        log(f"⏭ {teraz:%d.%m.%Y} je víkend — nič nerobím.")
-        zhrnutie(f"- ⏭ víkend ({teraz:%d.%m.}), bez akcie")
-        return 0
-    if not v_okne(teraz, CHECK_OD, CHECK_DO):
-        log(f"⏭ {teraz:%H:%M} — mimo okna {CHECK_OD:%H:%M}–{CHECK_DO:%H:%M}, nič nerobím.")
-        zhrnutie(f"- ⏭ mimo okna ({teraz:%H:%M}), bez akcie")
-        return 0
+    dovod = brana(teraz, CHECK_OD, CHECK_DO)
+    if dovod:
+        log(f"⏭ {dovod} — nič nerobím.")
+        if not os.environ.get("DRY_RUN"):
+            zhrnutie(f"- ⏭ {dovod}, bez akcie")
+            return 0
+        log("🧪 DRY_RUN — kontrolujem aj tak, nič sa nezapíše.")
 
     with prehliadac() as driver:
         prihlas(driver, os.environ["USERNAME"], os.environ["PASSWORD"])
@@ -166,14 +174,13 @@ def kontrola(teraz):
 
 def zapis(teraz):
     """Zapíše príchod, ak je to ešte zmysluplné."""
-    if not pracovny_den(teraz):
-        log(f"⏭ {teraz:%d.%m.%Y} je víkend — nič nerobím.")
-        zhrnutie(f"- ⏭ víkend ({teraz:%d.%m.}), bez akcie")
-        return 0
-    if not v_okne(teraz, RECORD_OD, RECORD_DO):
-        log(f"⏭ {teraz:%H:%M} — odkaz platí len {RECORD_OD:%H:%M}–{RECORD_DO:%H:%M}.")
-        zhrnutie(f"- ⏭ neskorý klik ({teraz:%H:%M}), bez akcie")
-        return 0
+    dovod = brana(teraz, RECORD_OD, RECORD_DO)
+    if dovod:
+        log(f"⏭ {dovod} — nič nerobím.")
+        if not os.environ.get("DRY_RUN"):
+            zhrnutie(f"- ⏭ {dovod}, bez akcie")
+            return 0
+        log("🧪 DRY_RUN — kontrolujem aj tak, nič sa nezapíše.")
 
     with prehliadac() as driver:
         prihlas(driver, os.environ["USERNAME"], os.environ["PASSWORD"])
