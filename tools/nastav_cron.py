@@ -6,14 +6,14 @@
 Úloha 2 - každý deň o 16:31 a 17:31 (bratislavský čas) spustí workflow cez API,
             takže odchod nepadá na čas, ktorý vyberie GitHub, ale na 16:31 + náhodu.
 
-Potrebuje dve premenné prostredia:
-  GITHUB_TOKEN     fine-grained PAT, len repo zdenoiva-auto, právo Actions: Read and write
-  CRONJOB_API_KEY  API kľúč z cron-job.org (Settings -> API key)
+Potrebuje dve hodnoty: fine-grained PAT (len repo zdenoiva-auto, právo
+Actions: Read and write) a API kľúč z cron-job.org (Settings -> API key).
 
 Použitie (PowerShell):
-  $env:GITHUB_TOKEN    = "github_pat_..."
-  $env:CRONJOB_API_KEY = "..."
   python tools/nastav_cron.py
+
+Skript si obe hodnoty vypýta a vstup sa nezobrazuje, takže sa nikam neukladajú.
+Dajú sa zadať aj cez premenné prostredia GITHUB_TOKEN a CRONJOB_API_KEY.
 
 Skript je idempotentný - opakované spustenie úlohy upraví, nie zduplikuje.
 """
@@ -108,36 +108,55 @@ def ulohy(token):
 GITHUB_PREFIXES = ("ghp_", "github_pat_", "gho_", "ghu_", "ghs_", "ghr_")
 
 
+def je_github_token(hodnota):
+    return hodnota.startswith(GITHUB_PREFIXES) and hodnota != "github_pat_..."
+
+
+def je_cronjob_kluc(hodnota):
+    return not hodnota.startswith(GITHUB_PREFIXES) and len(hodnota) >= 8
+
+
+def nacitaj(nazov, popis, kontrola, co_je_spravne):
+    """Vezme hodnotu z prostredia, inak sa na nu skryto spyta.
+
+    Hodnota, ktora nevyzera spravne (napr. zaseknuta ukazka z minuleho pokusu),
+    sa ignoruje a skript sa spyta nanovo.
+    """
+    hodnota = os.environ.get(nazov, "").strip()
+    if hodnota and not kontrola(hodnota):
+        print(f"Pozn.: v premennej {nazov} je neplatna hodnota z minula, ignorujem ju.")
+        hodnota = ""
+
+    while not hodnota:
+        if not sys.stdin.isatty():
+            print(f"CHYBA: chyba {nazov} a konzola nie je interaktivna.")
+            return ""
+        print(f"{popis} (vstup sa nezobrazuje):")
+        hodnota = getpass.getpass("  > ").strip()
+        if hodnota and not kontrola(hodnota):
+            print(f"  {co_je_spravne}, skus znova.")
+            hodnota = ""
+    return hodnota
+
+
 def main():
-    token = os.environ.get("GITHUB_TOKEN", "").strip()
-    kluc = os.environ.get("CRONJOB_API_KEY", "").strip()
-
+    token = nacitaj(
+        "GITHUB_TOKEN",
+        "GitHub PAT",
+        je_github_token,
+        "ma zacinat 'github_pat_' alebo 'ghp_' a nesmie to byt ukazka 'github_pat_...'",
+    )
     if not token:
-        if not sys.stdin.isatty():
-            print("CHYBA: chyba GITHUB_TOKEN a konzola nie je interaktivna.")
-            return 1
-        print("GitHub PAT (vstup sa nezobrazuje):")
-        token = getpass.getpass("  > ").strip()
-    if not kluc:
-        if not sys.stdin.isatty():
-            print("CHYBA: chyba CRONJOB_API_KEY a konzola nie je interaktivna.")
-            return 1
-        print("cron-job.org API kluc (vstup sa nezobrazuje):")
-        kluc = getpass.getpass("  > ").strip()
-
-    if not token or token.startswith("github_pat_..."):
-        print("CHYBA: GITHUB_TOKEN je prazdny alebo obsahuje iba ukazku 'github_pat_...'.")
         print("       Vytvor PAT: https://github.com/settings/personal-access-tokens/new")
         return 1
-    if not token.startswith(GITHUB_PREFIXES):
-        print("CHYBA: GITHUB_TOKEN nevyzera ako GitHub token (ma zacinat 'github_pat_' alebo 'ghp_').")
-        return 1
-    if kluc.startswith(GITHUB_PREFIXES):
-        print("CHYBA: CRONJOB_API_KEY obsahuje GitHub token, nie kluc z cron-job.org.")
-        print("       Kluc najdes v console.cron-job.org -> Settings -> API key.")
-        return 1
+
+    kluc = nacitaj(
+        "CRONJOB_API_KEY",
+        "cron-job.org API kluc",
+        je_cronjob_kluc,
+        "toto je GitHub token, potrebujem kluc z console.cron-job.org -> Settings -> API key",
+    )
     if not kluc:
-        print("CHYBA: chyba CRONJOB_API_KEY.")
         return 1
 
     gh = {
