@@ -1,6 +1,7 @@
 # zdenoiva-auto
 
-Skript zapíše vo webBox (ELKO) odchod z práce. Beží na GitHub Actions, bez servera.
+Skript zapisuje vo webBox (ELKO) odchod z práce a ranný príchod. Beží na GitHub Actions,
+bez servera.
 
 ## Čo robí
 
@@ -37,9 +38,10 @@ ktorý sa len prihlási a vypíše stav, ale nič nezapíše.
 GitHub plánované behy spúšťa oneskorene (bežne 1–4 hodiny) a v public repe ich po
 60 dňoch bez aktivity potichu vypne. Preto sa dá workflow spúšťať zvonku:
 
-- `tools/nastav_cron.py` založí na cron-job.org dve úlohy — jednu, ktorá každý deň
-  o 03:00 workflow zapne (proti 60-dňovému vypnutiu), a druhú, ktorá ho o 16:31 a 17:31
-  bratislavského času spustí cez API.
+- `tools/nastav_cron.py` založí na cron-job.org tri úlohy — jednu, ktorá každý deň
+  o 03:00 workflow zapne (proti 60-dňovému vypnutiu), druhú, ktorá ho o 16:31 a 17:31
+  bratislavského času spustí cez API, a tretiu, ktorá v pracovné dni o 06:50 spustí
+  rannú kontrolu príchodu.
 
 Potrebné je vlastné fine-grained PAT (len tento repozitár, právo *Actions: Read and write*)
 a API kľúč z cron-job.org (*Settings → API key*):
@@ -53,6 +55,31 @@ príkazov ani do žiadneho logu. Dajú sa zadať aj cez premenné prostredia `GI
 a `CRONJOB_API_KEY`.
 
 Cron v `.github/workflows/auto.yml` zostáva ako záloha, keby externý spúšťač zlyhal.
+
+## Ranný príchod
+
+`prichod.py` v pracovný deň pred 7:45 skontroluje poslednú transakciu:
+
+- Ak je to `Práca / Odchod` (príchod na dnes chýba), pošle mail s tlačidlom
+  *„Som v práci — zapíš príchod“*.
+- Ak je poslednou transakciou čokoľvek iné, nič nerobí a skončí.
+
+Klik na tlačidlo otvorí stránku na Cloudflare Workeri, ktorá spustí workflow
+`prichod.yml` v režime `record`; ten príchod zapíše a overí. Odkaz platí len do 9:30
+a len vtedy, keď je poslednou transakciou stále odchod.
+
+Potrebné secrety (okrem `USERNAME` a `PASSWORD`):
+
+| Secret | Význam |
+| --- | --- |
+| `CONFIRM_URL` | adresa Workera vrátane `?k=...`, ktorá ide do mailu |
+| `SMTP_USER` | adresa, z ktorej sa mail posiela (napr. Gmail) |
+| `SMTP_PASSWORD` | app password k tej adrese |
+| `MAIL_TO` | kam mail chodí (voliteľné, inak `SMTP_USER`) |
+| `SMTP_HOST`, `SMTP_PORT` | voliteľné, inak `smtp.gmail.com:465` |
+
+Samotný Worker je v `worker/prichod.js` — nasadenie a jeho dve premenné
+(`GH_TOKEN`, `SECRET`) sú popísané priamo v hlavičke toho súboru.
 
 ## História
 
