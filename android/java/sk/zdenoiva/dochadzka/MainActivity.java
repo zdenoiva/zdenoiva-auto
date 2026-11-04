@@ -60,6 +60,14 @@ public class MainActivity extends Activity {
 
     private static final String JS_STAV =
             "(function(){"
+            // Ak stránka zobrazí hlášku o kamere ako vlastné okno, klikni v ňom OK.
+            + "try{"
+            + "var telo=document.body;"
+            + "if(telo&&/camera error|notallowederror/i.test(telo.innerText||'')){"
+            + "var b=telo.querySelectorAll('button,[role=button],.btn,a');"
+            + "for(var j=0;j<b.length;j++){var t=(b[j].innerText||'').trim().toLowerCase();"
+            + "if(t==='ok'||t==='close'||t==='zavrieť'||t==='zavriet'){b[j].click();break;}}"
+            + "}}catch(e){}"
             + "var t=document.getElementById('rdr-last-transaction');"
             + "if(!t)return 'cakam';"
             + "var s=(t.innerText||'').replace(/\\s+/g,' ');"
@@ -79,6 +87,15 @@ public class MainActivity extends Activity {
     private static final String JS_TEXTOVA_STAV =
             "(function(){var t=document.getElementById('rdr-last-transaction');"
             + "return t?(t.innerText||'').replace(/\\s+/g,' '):'';})()";
+
+    /** Hlášky o kamere/mikrofóne od webu — appka ich odklikne sama, bez okna. */
+    private static boolean jeChybaKamery(String sprava) {
+        if (sprava == null) return false;
+        String s = sprava.toLowerCase();
+        return s.contains("camera") || s.contains("kamera")
+                || s.contains("notallowederror") || s.contains("getusermedia")
+                || s.contains("mediadevices") || s.contains("permission denied");
+    }
 
     private SharedPreferences prefy;
     private WebView web;
@@ -205,6 +222,17 @@ public class MainActivity extends Activity {
             // Potvrdenia samotného webu (napr. „Zapísať odchod?“) majú fungovať.
             @Override
             public boolean onJsAlert(WebView v, String url, String sprava, final JsResult vysledok) {
+                if (jeChybaKamery(sprava)) {
+                    // Web sa sťažuje, že nemá kameru. Odfajkneme potichu — inak by
+                    // hláška blokovala stránku a stav by sa nenačítal.
+                    vysledok.confirm();
+                    if (cakamNaPrichod) {
+                        hlavny.postDelayed(new Runnable() {
+                            public void run() { skusPrichod(); }
+                        }, 800);
+                    }
+                    return true;
+                }
                 new AlertDialog.Builder(MainActivity.this)
                         .setMessage(sprava)
                         .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -219,6 +247,10 @@ public class MainActivity extends Activity {
 
             @Override
             public boolean onJsConfirm(WebView v, String url, String sprava, final JsResult vysledok) {
+                if (jeChybaKamery(sprava)) {
+                    vysledok.confirm();
+                    return true;
+                }
                 new AlertDialog.Builder(MainActivity.this)
                         .setMessage(sprava)
                         .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -291,7 +323,7 @@ public class MainActivity extends Activity {
 
     private void skusPrichod() {
         if (!cakamNaPrichod) return;
-        if (pokusyOPrichod >= 6) {
+        if (pokusyOPrichod >= 10) {
             cakamNaPrichod = false;
             oznam("Nepodarilo sa prečítať stav stránky.\nSkús to ručne v appke.");
             return;
@@ -309,13 +341,14 @@ public class MainActivity extends Activity {
                     cakamNaPrichod = false;
                     zrusOznam();
                     oznam("Príchod už je zapísaný — nič netreba.");
-                } else if (stav.equals("ine")) {
+                } else if (stav.equals("ine") && pokusyOPrichod >= 4) {
                     cakamNaPrichod = false;
                     oznam("Posledná transakcia nie je odchod — nič som nezapísal.");
                 } else {
+                    // Stránka sa ešte načítava (alebo sa práve zatvorila hláška o kamere).
                     hlavny.postDelayed(new Runnable() {
                         public void run() { skusPrichod(); }
-                    }, 2000);
+                    }, 1500);
                 }
             }
         });
