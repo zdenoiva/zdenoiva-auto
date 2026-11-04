@@ -250,18 +250,63 @@ def test_mailu(teraz):
     return 0
 
 
+def smtp_diagnostika():
+    """Vypíše, čo presne server odpovie pri spojení a prihlásení (bez hesla)."""
+    pouzivatel = os.environ.get("SMTP_USER", "").strip()
+    heslo = os.environ.get("SMTP_PASSWORD", "").strip()
+    if not pouzivatel:
+        log("CHYBA: chýba SMTP_USER")
+        return 1
+    domena = pouzivatel.rsplit("@", 1)[-1].lower()
+    host = os.environ.get("SMTP_HOST", "").strip()
+    if not host:
+        host = "smtp.gmail.com" if domena in ("gmail.com", "googlemail.com") else ""
+
+    log(f"účet: @{domena}, host: {host or '?'}, heslo: {'nastavené' if heslo else 'chýba'}, "
+        f"dĺžka hesla: {len(heslo)}")
+
+    for port in (465, 587):
+        server = None
+        try:
+            if port == 465:
+                server = smtplib.SMTP_SSL(host, port, timeout=20,
+                                          context=ssl.create_default_context())
+            else:
+                server = smtplib.SMTP(host, port, timeout=20)
+                server.starttls(context=ssl.create_default_context())
+            kod, sprava = server.ehlo()
+            log(f"[{port}] EHLO {kod}: {sprava.decode('utf-8', 'replace')[:150]}")
+            log(f"[{port}] AUTH ponuky: {server.esmtp_features.get('auth', 'žiadne')}")
+            try:
+                server.login(pouzivatel, heslo)
+                log(f"[{port}] prihlásenie OK")
+            except Exception as chyba:
+                log(f"[{port}] prihlásenie ZLYHALO: {type(chyba).__name__}: {chyba}")
+        except Exception as chyba:
+            log(f"[{port}] spojenie ZLYHALO: {type(chyba).__name__}: {chyba}")
+        finally:
+            if server is not None:
+                try:
+                    server.quit()
+                except Exception:
+                    pass
+    return 0
+
+
 def main():
     from selenium.common.exceptions import TimeoutException
 
     rezim = (sys.argv[1] if len(sys.argv) > 1 else os.environ.get("REZIM", "check")).strip()
-    if rezim not in ("check", "record", "test"):
-        print(f"Neznámy režim: {rezim} (čakám check, record alebo test)", file=sys.stderr)
+    if rezim not in ("check", "record", "test", "smtp"):
+        print(f"Neznámy režim: {rezim} (čakám check, record, test alebo smtp)", file=sys.stderr)
         return 2
 
     teraz = datetime.now(TZ)
     try:
         if rezim == "test":
             return test_mailu(teraz)
+        if rezim == "smtp":
+            return smtp_diagnostika()
         return kontrola(teraz) if rezim == "check" else zapis(teraz)
     except TimeoutException:
         log("❌ Niečo sa nenačítalo včas (prihlásenie alebo čítačka).")
