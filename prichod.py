@@ -90,7 +90,9 @@ def posli_mail(popis, cas, test=False):
     host = os.environ.get("SMTP_HOST", "").strip()
     port = int(os.environ.get("SMTP_PORT", "").strip() or "0")
     pouzivatel = os.environ.get("SMTP_USER", "").strip()
-    heslo = os.environ.get("SMTP_PASSWORD", "").strip()
+    # Gmail app password sa pri kopírovaní z webu vie preniesť aj s nezlomiteľnými
+    # medzerami (\xa0), ktoré SMTP odmietne. Zmiznúť musia všetky medzery.
+    heslo = "".join(os.environ.get("SMTP_PASSWORD", "").split())
     if not pouzivatel or not heslo:
         raise RuntimeError("Chýba SMTP_USER / SMTP_PASSWORD — mail sa nedá odoslať.")
     komu = os.environ.get("MAIL_TO", "").strip() or pouzivatel
@@ -253,7 +255,7 @@ def test_mailu(teraz):
 def smtp_diagnostika():
     """Vypíše, čo presne server odpovie pri spojení a prihlásení (bez hesla)."""
     pouzivatel = os.environ.get("SMTP_USER", "").strip()
-    heslo = os.environ.get("SMTP_PASSWORD", "").strip()
+    heslo = "".join(os.environ.get("SMTP_PASSWORD", "").split())
     if not pouzivatel:
         log("CHYBA: chýba SMTP_USER")
         return 1
