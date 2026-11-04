@@ -87,8 +87,8 @@ def posli_mail(popis, cas, test=False):
     if not link:
         raise RuntimeError("Chýba CONFIRM_URL — adresa Worker-a, ktorý zapisuje príchod.")
 
-    host = os.environ.get("SMTP_HOST", "").strip() or "smtp.gmail.com"
-    port = int(os.environ.get("SMTP_PORT", "").strip() or "465")
+    host = os.environ.get("SMTP_HOST", "").strip()
+    port = int(os.environ.get("SMTP_PORT", "").strip() or "0")
     pouzivatel = os.environ.get("SMTP_USER", "").strip()
     heslo = os.environ.get("SMTP_PASSWORD", "").strip()
     if not pouzivatel or not heslo:
@@ -129,17 +129,37 @@ def posli_mail(popis, cas, test=False):
     sprava.set_content(text)
     sprava.add_alternative(html, subtype="html")
 
-    if port == 465:
-        with smtplib.SMTP_SSL(host, port, timeout=30,
-                              context=ssl.create_default_context()) as server:
-            server.login(pouzivatel, heslo)
-            server.send_message(sprava)
-    else:
-        with smtplib.SMTP(host, port, timeout=30) as server:
-            server.starttls(context=ssl.create_default_context())
-            server.login(pouzivatel, heslo)
-            server.send_message(sprava)
-    log(f"📧 Mail odoslaný na {komu}.")
+    domena = pouzivatel.rsplit("@", 1)[-1].lower()
+    if not host:
+        if domena in ("gmail.com", "googlemail.com"):
+            host = "smtp.gmail.com"
+        else:
+            raise RuntimeError(
+                f"Chýba SMTP_HOST pre adresu @{domena} (napr. smtp.seznam.cz)."
+            )
+
+    porty = [port] if port else [465, 587]
+    chyby = []
+    log(f"📮 SMTP {host}, účet @{domena}, port(y) {porty}")
+    for pokus_port in porty:
+        try:
+            if pokus_port == 465:
+                with smtplib.SMTP_SSL(host, pokus_port, timeout=30,
+                                      context=ssl.create_default_context()) as server:
+                    server.login(pouzivatel, heslo)
+                    server.send_message(sprava)
+            else:
+                with smtplib.SMTP(host, pokus_port, timeout=30) as server:
+                    server.starttls(context=ssl.create_default_context())
+                    server.login(pouzivatel, heslo)
+                    server.send_message(sprava)
+            log(f"📧 Mail odoslaný cez {host}:{pokus_port}.")
+            return
+        except Exception as chyba:
+            chyby.append(f"{pokus_port}: {type(chyba).__name__}: {chyba}")
+            log(f"⚠️ Port {pokus_port} zlyhal: {type(chyba).__name__}: {chyba}")
+
+    raise RuntimeError("Mail sa nepodarilo odoslať — " + " | ".join(chyby))
 
 
 def kontrola(teraz):
