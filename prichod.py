@@ -187,7 +187,19 @@ def kontrola(teraz):
             zhrnutie(f"- 🧪 dry-run: mail by sa poslal (posledná transakcia `{popis}`)")
             return 0
 
-        posli_mail(popis, cas)
+        if not os.environ.get("SMTP_PASSWORD", "").strip():
+            log("ℹ️ Mail nie je nastavený (chýba SMTP_PASSWORD) — preskakujem.")
+            zhrnutie("- ℹ️ mail nie je nastavený, preskakujem")
+            return 0
+
+        try:
+            posli_mail(popis, cas)
+        except Exception as chyba:
+            # Stav je prečítaný správne; zlyhalo len odoslanie. Nech to nezhodí celý beh.
+            log(f"⚠️ Mail sa nepodarilo odoslať: {chyba}")
+            zhrnutie(f"- ⚠️ mail zlyhal: `{chyba}`")
+            return 0
+
         zhrnutie(f"- 📧 mail odoslaný (posledná transakcia: `{popis}` z `{cas}`)")
         return 0
 
