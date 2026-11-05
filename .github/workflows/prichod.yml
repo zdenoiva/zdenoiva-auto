@@ -11,6 +11,7 @@ on:
           - record
           - test
           - smtp
+          - login
         default: check
       dry_run:
         description: 'Len overiť stav, nič neposielať a nič nezapisovať'
