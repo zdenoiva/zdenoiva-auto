@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.widget.Toast;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -67,17 +66,8 @@ final class Aktualizacie {
 
                         JSONObject vydanie = new JSONObject(text.toString());
                         tag = vydanie.optString("tag_name", "");
-                        JSONArray assety = vydanie.optJSONArray("assets");
-                        if (assety != null) {
-                            for (int i = 0; i < assety.length(); i++) {
-                                JSONObject asset = assety.optJSONObject(i);
-                                if (asset != null
-                                        && "Dochadzka.apk".equals(asset.optString("name"))) {
-                                    url = asset.optString("browser_download_url");
-                                }
-                            }
-                        }
-                        if (url == null || url.isEmpty()) url = vydanie.optString("html_url", "");
+                        // Odkaz na stránku vydania — appka sama nič nestahuje ani neinštaluje.
+                        url = vydanie.optString("html_url", "");
                         p.edit().putLong(K_CAS, System.currentTimeMillis()).apply();
                     }
                 } catch (Exception e) {
@@ -124,7 +114,7 @@ final class Aktualizacie {
                 .setTitle("Dostupná verzia " + najnovsia)
                 .setMessage("V appke máš " + teraz + ". Po stiahnutí sa Android spýta "
                         + "na potvrdenie inštalácie; údaje aj nastavenia ostanú.")
-                .setPositiveButton("Stiahnuť", new DialogInterface.OnClickListener() {
+                .setPositiveButton("Otvoriť GitHub", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int ktore) {
                         if (ciel != null && !ciel.isEmpty()) {
                             aktivita.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(ciel)));
