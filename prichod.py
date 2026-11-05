@@ -295,11 +295,57 @@ def smtp_diagnostika():
     return 0
 
 
+
+def login_test():
+    """Skúsi prihlásenie obyčajným HTTP POST-om (rovnako ako appka)."""
+    import http.cookiejar
+    import urllib.parse
+    import urllib.request
+
+    meno = os.environ.get("USERNAME", "")
+    heslo = os.environ.get("PASSWORD", "")
+    if not meno or not heslo:
+        log("CHYBA: chýba USERNAME / PASSWORD")
+        return 1
+
+    klient = urllib.request.build_opener(
+        urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()),
+        urllib.request.HTTPRedirectHandler(),
+    )
+    klient.addheaders = [("User-Agent", "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 "
+                                        "(KHTML, like Gecko) Chrome/126 Mobile Safari/537.36")]
+    try:
+        klient.open("https://webbox.elko.sk/logindispatcher", timeout=30).read()
+        data = urllib.parse.urlencode({
+            "_username": meno,
+            "_password": heslo,
+            "_loginto": "webbox",
+            "_target_path": "",
+            "email_check25863": "",
+            "_authenticationConnectorId": "",
+        }).encode()
+        odpoved = klient.open("https://webbox.elko.sk/login_check", data, timeout=30)
+        html = odpoved.read().decode("utf-8", "replace")
+        log(f"po POST: {odpoved.geturl()} | čítačka v stránke: {'rdr-last-transaction' in html}")
+        if "rdr-last-transaction" not in html:
+            druha = klient.open("https://webbox.elko.sk/", timeout=30)
+            html2 = druha.read().decode("utf-8", "replace")
+            log(f"skúška /: {druha.geturl()} | čítačka: {'rdr-last-transaction' in html2}")
+            if "rdr-last-transaction" in html2:
+                log("HTTP prihlásenie FUNGUJE (session cookie stačí).")
+                return 0
+            log("HTTP prihlásenie NEFUNGUJE — treba ostať pri prihlásení v prehliadači.")
+            return 1
+        log("HTTP prihlásenie FUNGUJE.")
+        return 0
+    except Exception as chyba:
+        log(f"CHYBA pri HTTP prihlásení: {type(chyba).__name__}: {chyba}")
+        return 1
 def main():
     from selenium.common.exceptions import TimeoutException
 
     rezim = (sys.argv[1] if len(sys.argv) > 1 else os.environ.get("REZIM", "check")).strip()
-    if rezim not in ("check", "record", "test", "smtp"):
+    if rezim not in ("check", "record", "test", "smtp", "login"):
         print(f"Neznámy režim: {rezim} (čakám check, record, test alebo smtp)", file=sys.stderr)
         return 2
 
@@ -309,6 +355,8 @@ def main():
             return test_mailu(teraz)
         if rezim == "smtp":
             return smtp_diagnostika()
+        if rezim == "login":
+            return login_test()
         return kontrola(teraz) if rezim == "check" else zapis(teraz)
     except TimeoutException:
         log("❌ Niečo sa nenačítalo včas (prihlásenie alebo čítačka).")
