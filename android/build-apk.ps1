@@ -78,6 +78,7 @@ if (-not (Test-Path $ks)) {
     if ($LASTEXITCODE -ne 0) { throw "keytool zlyhal" }
 }
 & "$buildTools\apksigner.bat" sign --ks $ks --ks-pass pass:dochadzka --key-pass pass:dochadzka `
+    --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true `
     --out $apk "$out\aligned.apk"
 if ($LASTEXITCODE -ne 0) { throw "apksigner zlyhal" }
 

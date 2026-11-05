@@ -122,6 +122,9 @@ public class MainActivity extends Activity {
         nastavWeb();
         zvysPovolenieOznameni();
 
+        Sviatky.nacitaj(this);
+        Sviatky.obnov(this, false);
+
         if (prefy.getString("meno", "").isEmpty()) {
             vyziadajUdaje();
         } else {
@@ -130,6 +133,13 @@ public class MainActivity extends Activity {
         }
 
         spracujZamer(getIntent());
+
+        // Tichá kontrola novej verzie raz denne, nech to neotravuje pri každom spustení.
+        hlavny.postDelayed(new Runnable() {
+            public void run() {
+                Aktualizacie.skontroluj(MainActivity.this, true);
+            }
+        }, 4000);
     }
 
     @Override
@@ -490,6 +500,10 @@ public class MainActivity extends Activity {
         }
         if (polozka.getItemId() == R.id.nastavenia) {
             startActivity(new Intent(this, Nastavenia.class));
+            return true;
+        }
+        if (polozka.getItemId() == R.id.aktualizacia) {
+            Aktualizacie.skontroluj(this, false);
             return true;
         }
         if (polozka.getItemId() == R.id.prihlasenie) {

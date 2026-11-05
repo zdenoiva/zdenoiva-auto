@@ -1,19 +1,113 @@
 package sk.zdenoiva.dochadzka;
 
-import java.util.Calendar;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.util.Log;
 
-/** Slovenské štátne sviatky a dni pracovného pokoja (zákon 241/1993). */
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Calendar;
+import java.util.Locale;
+
+/**
+ * Slovenské štátne sviatky a dni pracovného pokoja (zákon 241/1993).
+ *
+ * Zoznam sa raz za týždeň ťahá z GitHubu (súbor android/sviatky.json), takže keď sa
+ * sviatky zmenia zákonom, stačí upraviť ten súbor — netreba novú verziu appky.
+ * Kým zoznam pre daný rok nie je na GitHube, počíta sa záložným spôsobom vstavaným
+ * v appke (pevné dátumy + Veľký piatok a Veľkonočný pondelok).
+ */
 final class Sviatky {
+
+    private static final String ZOZNAM_URL =
+            "https://raw.githubusercontent.com/zdenoiva/zdenoiva-auto/main/android/sviatky.json";
+    private static final String K_JSON = "sviatky_json";
+    private static final String K_CAS = "sviatky_cas";
+    private static final long PLATNOST = 7L * 24 * 60 * 60 * 1000; // týždeň
+
+    private static JSONObject cache;
 
     private Sviatky() {
     }
 
-    static boolean jeSviatok(Calendar den) {
+    /** Načíta uložený zoznam (volaj pri štarte appky, hneď je dostupný aj offline). */
+    static synchronized void nacitaj(Context kontext) {
+        String json = Planovac.prefs(kontext).getString(K_JSON, "");
+        if (json.isEmpty()) return;
+        try {
+            cache = new JSONObject(json);
+        } catch (Exception e) {
+            cache = null;
+        }
+    }
+
+    /** Stiahne novší zoznam z GitHubu, ak je uložený starší ako týždeň. */
+    static void obnov(final Context kontext, boolean silou) {
+        final SharedPreferences p = Planovac.prefs(kontext);
+        long posledne = p.getLong(K_CAS, 0);
+        if (!silou && System.currentTimeMillis() - posledne < PLATNOST) return;
+
+        new Thread(new Runnable() {
+            public void run() {
+                HttpURLConnection spojenie = null;
+                try {
+                    spojenie = (HttpURLConnection) new URL(ZOZNAM_URL).openConnection();
+                    spojenie.setConnectTimeout(15000);
+                    spojenie.setReadTimeout(15000);
+                    spojenie.setRequestProperty("User-Agent", "Dochadzka");
+                    if (spojenie.getResponseCode() != 200) {
+                        Log.i("Dochadzka", "sviatky: HTTP " + spojenie.getResponseCode());
+                        return;
+                    }
+                    StringBuilder text = new StringBuilder();
+                    BufferedReader citac = new BufferedReader(
+                            new InputStreamReader(spojenie.getInputStream(), "UTF-8"));
+                    String riadok;
+                    while ((riadok = citac.readLine()) != null) text.append(riadok);
+                    citac.close();
+
+                    JSONObject nove = new JSONObject(text.toString());
+                    synchronized (Sviatky.class) {
+                        cache = nove;
+                    }
+                    p.edit().putString(K_JSON, text.toString())
+                            .putLong(K_CAS, System.currentTimeMillis()).apply();
+                    Log.i("Dochadzka", "sviatky: načítané roky " + nove.length());
+                } catch (Exception chyba) {
+                    Log.i("Dochadzka", "sviatky: nepodarilo sa načítať (" + chyba.getMessage() + ")");
+                } finally {
+                    if (spojenie != null) spojenie.disconnect();
+                }
+            }
+        }).start();
+    }
+
+    static synchronized boolean jeSviatok(Calendar den) {
+        if (cache != null) {
+            JSONArray dni = cache.optJSONArray(String.valueOf(den.get(Calendar.YEAR)));
+            if (dni != null) {
+                String kluc = String.format(Locale.US, "%04d-%02d-%02d",
+                        den.get(Calendar.YEAR), den.get(Calendar.MONTH) + 1,
+                        den.get(Calendar.DAY_OF_MONTH));
+                for (int i = 0; i < dni.length(); i++) {
+                    if (kluc.equals(dni.optString(i))) return true;
+                }
+                return false; // rok je v zozname z GitHubu, takže tento deň sviatok nie je
+            }
+        }
+        return jeSviatokVstaveny(den);
+    }
+
+    private static boolean jeSviatokVstaveny(Calendar den) {
         int d = den.get(Calendar.DAY_OF_MONTH);
         int m = den.get(Calendar.MONTH) + 1;
         int rok = den.get(Calendar.YEAR);
 
-        // pevné sviatky
         if (m == 1 && d == 1) return true;    // Deň vzniku SR
         if (m == 1 && d == 6) return true;    // Zjavenie Pána
         if (m == 5 && d == 1) return true;    // Sviatok práce
@@ -28,17 +122,16 @@ final class Sviatky {
         if (m == 12 && d == 25) return true;  // Prvý sviatok vianočný
         if (m == 12 && d == 26) return true;  // Druhý sviatok vianočný
 
-        // pohyblivé: Veľký piatok a Veľkonočný pondelok
         int[] velkaNoc = velkaNoc(rok);
-        Calendar nedeľa = Calendar.getInstance();
-        nedeľa.clear();
-        nedeľa.set(rok, velkaNoc[0] - 1, velkaNoc[1]);
+        Calendar nedela = Calendar.getInstance();
+        nedela.clear();
+        nedela.set(rok, velkaNoc[0] - 1, velkaNoc[1]);
 
-        Calendar piatok = (Calendar) nedeľa.clone();
+        Calendar piatok = (Calendar) nedela.clone();
         piatok.add(Calendar.DAY_OF_MONTH, -2);
         if (rovnakyDen(den, piatok)) return true;
 
-        Calendar pondelok = (Calendar) nedeľa.clone();
+        Calendar pondelok = (Calendar) nedela.clone();
         pondelok.add(Calendar.DAY_OF_MONTH, 1);
         return rovnakyDen(den, pondelok);
     }
