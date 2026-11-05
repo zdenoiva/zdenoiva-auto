@@ -78,6 +78,8 @@ final class Sviatky {
                     p.edit().putString(K_JSON, text.toString())
                             .putLong(K_CAS, System.currentTimeMillis()).apply();
                     Log.i("Dochadzka", "sviatky: načítané roky " + nove.length());
+                    // Nový zoznam môže zmeniť najbližší termín (napr. keď je deň sviatok).
+                    Planovac.naplanuj(kontext);
                 } catch (Exception chyba) {
                     Log.i("Dochadzka", "sviatky: nepodarilo sa načítať (" + chyba.getMessage() + ")");
                 } finally {

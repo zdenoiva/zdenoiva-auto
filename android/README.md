@@ -12,6 +12,13 @@ prihlasovacie údaje, aby sa prihlásila sama.
 - **Nastavenia** (menu ⋮): oznámenie zapnúť/vypnúť, nastaviť čas a zapnúť
   *„Len v pracovné dni“* — vtedy sa vynechajú víkendy aj slovenské štátne sviatky
   vrátane Veľkého piatku a Veľkonočného pondelka. Predvolene 07:35, len pracovné dni.
+- **Sviatky z GitHubu**: zoznam sa raz za týždeň ťahá zo súboru `sviatky.json`
+  v tomto repe, takže keď sa sviatky zmenia zákonom, stačí upraviť ten súbor —
+  netreba novú verziu appky. Kým zoznam pre daný rok chýba, počíta sa vstaveným
+  pravidlom (pevné dátumy + Veľký piatok a Veľkonočný pondelok).
+- **Kontrola aktualizácií** (menu ⋮ → *Skontrolovať aktualizáciu*): porovná verziu
+  s najnovším release na GitHube a ponúkne stiahnutie. Ticho sa kontroluje aj
+  pri spustení, raz za deň.
 - Hlášky webu o kamere („Camera error: NotAllowedError“) appka odklikne sama, inak by
   blokovali stránku a stav by sa nenačítal.
 - Prihlasovacie údaje si pamätá, prihlási sa samo vrátane obnovenia vypršanej session.
