@@ -16,6 +16,8 @@ public class Budik extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context kontext, Intent zamer) {
+        if (!Planovac.zapnute(kontext)) return;
+
         NotificationManager spravca =
                 (NotificationManager) kontext.getSystemService(Context.NOTIFICATION_SERVICE);
         if (spravca == null) return;

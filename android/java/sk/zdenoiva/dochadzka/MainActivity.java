@@ -488,6 +488,10 @@ public class MainActivity extends Activity {
             web.reload();
             return true;
         }
+        if (polozka.getItemId() == R.id.nastavenia) {
+            startActivity(new Intent(this, Nastavenia.class));
+            return true;
+        }
         if (polozka.getItemId() == R.id.prihlasenie) {
             pokusovOPrihlasenie = 0;
             CookieManager.getInstance().removeAllCookies(null);

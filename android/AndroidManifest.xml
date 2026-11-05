@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="sk.zdenoiva.dochadzka"
-    android:versionCode="3"
-    android:versionName="1.2">
+    android:versionCode="4"
+    android:versionName="1.3">
 
     <!-- Internet a oznámenia (o ne sa appka pýta pri prvom spustení).
          Žiadna kamera, poloha, súbory ani mikrofon. -->
@@ -31,6 +31,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".Nastavenia"
+            android:exported="false"
+            android:label="Nastavenia"
+            android:parentActivityName=".MainActivity" />
+
 
         <receiver android:name=".Budik" android:exported="false" />
 

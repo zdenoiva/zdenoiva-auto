@@ -9,6 +9,11 @@ prihlasovacie údaje, aby sa prihlásila sama.
 - **Ranné oznámenie**: v pracovný deň o 07:35 príde oznámenie *„Si v práci?“* s tlačidlom
   *Zapíš príchod*. Appka pri ťuknutí skontroluje poslednú transakciu a zapíše príchod len
   vtedy, keď je poslednou transakciou odchod. Ak už príchod máš, len to oznámi.
+- **Nastavenia** (menu ⋮): oznámenie zapnúť/vypnúť, nastaviť čas a zapnúť
+  *„Len v pracovné dni“* — vtedy sa vynechajú víkendy aj slovenské štátne sviatky
+  vrátane Veľkého piatku a Veľkonočného pondelka. Predvolene 07:35, len pracovné dni.
+- Hlášky webu o kamere („Camera error: NotAllowedError“) appka odklikne sama, inak by
+  blokovali stránku a stav by sa nenačítal.
 - Prihlasovacie údaje si pamätá, prihlási sa samo vrátane obnovenia vypršanej session.
 - Pustí len `elko.sk` a jeho subdomény; `tel:`, `mailto:` a cudzie odkazy potichu zablokuje.
 - Prihlásenie je v súkromnom úložisku appky (`SharedPreferences`), zálohovanie vypnuté.
