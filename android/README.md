@@ -1,6 +1,6 @@
 # Dochádzka (Android)
 
-Malá appka, ktorá zobrazí `https://webbox.elko.sk/` a po prvom spustení si zapamätá
+Malá appka, ktorá zobrazí webBox a po prvom spustení si zapamätá
 prihlasovacie údaje, aby sa prihlásila sama.
 
 ## Vlastnosti
@@ -22,7 +22,7 @@ prihlasovacie údaje, aby sa prihlásila sama.
 - Hlášky webu o kamere („Camera error: NotAllowedError“) appka odklikne sama, inak by
   blokovali stránku a stav by sa nenačítal.
 - Prihlasovacie údaje si pamätá, prihlási sa samo vrátane obnovenia vypršanej session.
-- Pustí len `elko.sk` a jeho subdomény; `tel:`, `mailto:` a cudzie odkazy potichu zablokuje.
+- Pustí len doménu webBoxu a jej subdomény; `tel:`, `mailto:` a cudzie odkazy potichu zablokuje.
 - Prihlásenie je v súkromnom úložisku appky (`SharedPreferences`), zálohovanie vypnuté.
 
 ## Povolenia

@@ -1,4 +1,4 @@
-"""Spoločná práca s webBox (ELKO) — prihlásenie, čítanie stavu, zápis transakcie.
+"""Spoločná práca s webBox — prihlásenie, čítanie stavu, zápis transakcie.
 
 Používajú to obe automatizácie: auto.py (odchod) aj prichod.py (ranný príchod).
 """

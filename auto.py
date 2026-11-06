@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Zapíše odchod vo webBox (ELKO) — najviac raz denne a len keď je človek v práci.
+"""Zapíše odchod vo webBox — najviac raz denne a len keď je človek v práci.
 
 Pravidlá:
   * Akcia sa vykoná len medzi 16:30 a 22:45 miestneho času (Europe/Bratislava).

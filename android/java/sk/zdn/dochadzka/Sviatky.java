@@ -1,4 +1,4 @@
-package sk.zdenoiva.dochadzka;
+package sk.zdn.dochadzka;
 
 import android.content.Context;
 import android.content.SharedPreferences;

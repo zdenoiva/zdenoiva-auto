@@ -1,4 +1,4 @@
-package sk.zdenoiva.dochadzka;
+package sk.zdn.dochadzka;
 
 import android.app.Notification;
 import android.app.NotificationChannel;

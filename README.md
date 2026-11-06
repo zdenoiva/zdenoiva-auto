@@ -1,11 +1,11 @@
 # zdenoiva-auto
 
-Skript zapisuje vo webBox (ELKO) odchod z práce a ranný príchod. Beží na GitHub Actions,
+Skript zapisuje vo webBox odchod z práce a ranný príchod. Beží na GitHub Actions,
 bez servera.
 
 ## Čo robí
 
-- Prihlási sa do `webbox.elko.sk` a prečíta poslednú transakciu z virtuálnej čítačky.
+- Prihlási sa do webBoxu a prečíta poslednú transakciu z virtuálnej čítačky.
 - Ak je poslednou transakciou **dnešný** `Práca / Príchod`, klikne na `Odchod`, potvrdí ho
   a overí, že ho systém naozaj zapísal.
 - V každom inom prípade (odchod už zapísaný, príchod z iného dňa, žiadny príchod,

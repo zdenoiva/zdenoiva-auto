@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ranná kontrola príchodu vo webBox (ELKO).
+"""Ranná kontrola príchodu vo webBox.
 
 Režimy (prvý argument):
   check   — v pracovný deň ráno zistí, či je poslednou transakciou "Práca / Odchod".

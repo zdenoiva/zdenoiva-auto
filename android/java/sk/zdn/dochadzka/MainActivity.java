@@ -1,4 +1,4 @@
-package sk.zdenoiva.dochadzka;
+package sk.zdn.dochadzka;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -40,7 +40,7 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 /**
- * Dochádzka — prihlásenie do webBox (ELKO) a zobrazenie virtuálnej čítačky.
+ * Dochádzka — prihlásenie do webBox a zobrazenie virtuálnej čítačky.
  *
  * Appka nemá prístup ku kamere, mikrofónu, GPS ani súborom. WebView dostane také
  * požiadavky rovno zamietnuté a nikdy sa na ne nepýta.
