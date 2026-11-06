@@ -13,8 +13,12 @@ TZ = ZoneInfo("Europe/Bratislava")
 PRICHOD = "Práca / Príchod"
 ODCHOD = "Práca / Odchod"
 
-LOGIN_URL = "https://webbox.elko.sk/logindispatcher"
-LOGOUT_URL = "https://webbox.elko.sk/logout"
+# Adresa sa berie z premennej prostredia, aby v repozitári nebola natvrdo.
+# V GitHub Actions je nastavená zo secretu WEBBOX_URL.
+ZAKLAD = (os.environ.get("WEBBOX_URL") or "").strip().rstrip("/")
+
+LOGIN_URL = ZAKLAD + "/logindispatcher"
+LOGOUT_URL = ZAKLAD + "/logout"
 
 
 def log(sprava):
@@ -101,6 +105,9 @@ def prihlas(driver, meno, heslo):
     from selenium.webdriver.common.by import By
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
+
+    if not ZAKLAD:
+        raise RuntimeError("Chýba premenná WEBBOX_URL (adresa dochádzkového systému).")
 
     log("📂 Otváram prihlasovaciu stránku...")
     driver.get(LOGIN_URL)

@@ -26,6 +26,7 @@ from webbox import (
     ODCHOD,
     PRICHOD,
     TZ,
+    ZAKLAD,
     datum_z,
     log,
     najdi_tlacidlo,
@@ -315,7 +316,7 @@ def login_test():
     klient.addheaders = [("User-Agent", "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 "
                                         "(KHTML, like Gecko) Chrome/126 Mobile Safari/537.36")]
     try:
-        klient.open("https://webbox.elko.sk/logindispatcher", timeout=30).read()
+        klient.open(ZAKLAD + "/logindispatcher", timeout=30).read()
         data = urllib.parse.urlencode({
             "_username": meno,
             "_password": heslo,
@@ -324,11 +325,11 @@ def login_test():
             "email_check25863": "",
             "_authenticationConnectorId": "",
         }).encode()
-        odpoved = klient.open("https://webbox.elko.sk/login_check", data, timeout=30)
+        odpoved = klient.open(ZAKLAD + "/login_check", data, timeout=30)
         html = odpoved.read().decode("utf-8", "replace")
         log(f"po POST: {odpoved.geturl()} | čítačka v stránke: {'rdr-last-transaction' in html}")
         if "rdr-last-transaction" not in html:
-            druha = klient.open("https://webbox.elko.sk/", timeout=30)
+            druha = klient.open(ZAKLAD + "/", timeout=30)
             html2 = druha.read().decode("utf-8", "replace")
             log(f"skúška /: {druha.geturl()} | čítačka: {'rdr-last-transaction' in html2}")
             if "rdr-last-transaction" in html2:

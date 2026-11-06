@@ -29,6 +29,7 @@ jobs:
     # GitHub beh zabil skôr, než stihne zapísať odchod.
     timeout-minutes: 75
     env:
+      WEBBOX_URL: ${{ secrets.WEBBOX_URL }}
       USERNAME: ${{ secrets.USERNAME }}
       PASSWORD: ${{ secrets.PASSWORD }}
       DRY_RUN: ${{ inputs.dry_run && '1' || '' }}

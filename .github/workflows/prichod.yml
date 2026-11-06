@@ -31,6 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
+      WEBBOX_URL: ${{ secrets.WEBBOX_URL }}
       USERNAME: ${{ secrets.USERNAME }}
       PASSWORD: ${{ secrets.PASSWORD }}
       SMTP_HOST: ${{ secrets.SMTP_HOST }}
