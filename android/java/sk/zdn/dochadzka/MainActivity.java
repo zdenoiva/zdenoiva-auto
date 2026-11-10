@@ -51,6 +51,7 @@ import org.json.JSONTokener;
 public class MainActivity extends Activity {
 
     public static final String EXTRA_AKCIA = "akcia";
+    public static final String EXTRA_CAS = "cas_akcie";
     public static final String AKCIA_PRICHOD = "prichod";
 
     private static final String START_URL = "https://webbox.elko.sk/";
@@ -151,10 +152,18 @@ public class MainActivity extends Activity {
 
     private void spracujZamer(Intent zamer) {
         if (zamer == null) return;
-        if (AKCIA_PRICHOD.equals(zamer.getStringExtra(EXTRA_AKCIA))) {
-            zamer.removeExtra(EXTRA_AKCIA);
-            spustiPrichod();
-        }
+        if (!AKCIA_PRICHOD.equals(zamer.getStringExtra(EXTRA_AKCIA))) return;
+
+        long cas = zamer.getLongExtra(EXTRA_CAS, 0);
+        zamer.removeExtra(EXTRA_AKCIA);
+        zamer.removeExtra(EXTRA_CAS);
+
+        // Android po zabití procesu obnoví aktivitu s pôvodným intentom z oznámenia.
+        // Bez tejto poistky by sa zápis príchodu spustil znova pri obyčajnom otvorení.
+        if (cas > 0 && cas <= prefy.getLong("posledna_akcia", 0)) return;
+        if (cas > 0) prefy.edit().putLong("posledna_akcia", cas).apply();
+
+        spustiPrichod();
     }
 
     private void zvysPovolenieOznameni() {
@@ -335,7 +344,7 @@ public class MainActivity extends Activity {
         if (!cakamNaPrichod) return;
         if (pokusyOPrichod >= 10) {
             cakamNaPrichod = false;
-            oznam("Nepodarilo sa prečítať stav stránky.\nSkús to ručne v appke.");
+            chyba("Nepodarilo sa prečítať stav stránky.\nSkús to ručne v appke.");
             return;
         }
         pokusyOPrichod++;
@@ -377,7 +386,7 @@ public class MainActivity extends Activity {
                     }, 800);
                 } else {
                     cakamNaPrichod = false;
-                    oznam("Potvrdzovacie tlačidlo sa nenašlo.\nSkús to ručne v appke.");
+                    chyba("Potvrdzovacie tlačidlo sa nenašlo.\nSkús to ručne v appke.");
                 }
             }
         });
@@ -397,7 +406,7 @@ public class MainActivity extends Activity {
                     }, 2500);
                 } else {
                     cakamNaPrichod = false;
-                    oznam("Zápis sa nepotvrdil.\nPosledná transakcia: " + text);
+                    chyba("Zápis sa nepotvrdil.\nPosledná transakcia: " + text);
                 }
             }
         });
@@ -417,6 +426,12 @@ public class MainActivity extends Activity {
         NotificationManager spravca =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (spravca != null) spravca.cancel(Budik.OZN_DEN);
+    }
+
+    /** Chybová hláška — dovolí, aby sa to isté oznámenie dalo skúsiť znova. */
+    private void chyba(String sprava) {
+        prefy.edit().putLong("posledna_akcia", 0).apply();
+        oznam(sprava);
     }
 
     private void oznam(String sprava) {

@@ -33,6 +33,7 @@ public class Budik extends BroadcastReceiver {
 
         Intent otvor = new Intent(kontext, MainActivity.class);
         otvor.putExtra(MainActivity.EXTRA_AKCIA, MainActivity.AKCIA_PRICHOD);
+        otvor.putExtra(MainActivity.EXTRA_CAS, System.currentTimeMillis());
         otvor.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pohlad = PendingIntent.getActivity(
                 kontext, 2, otvor,

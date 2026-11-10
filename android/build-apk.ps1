@@ -59,7 +59,9 @@ Write-Host "5/6 zarovnanie (zipalign)"
 if ($LASTEXITCODE -ne 0) { throw "zipalign zlyhal" }
 
 Write-Host "6/6 podpis (apksigner)"
-$ks = Join-Path $proj "dochadzka.jks"
+$ksDir = Join-Path $env:USERPROFILE ".dochadzka"
+New-Item -ItemType Directory -Force -Path $ksDir | Out-Null
+$ks = Join-Path $ksDir "dochadzka.jks"
 if (-not (Test-Path $ks)) {
     $keytool = (Get-Command keytool -ErrorAction SilentlyContinue).Source
     if (-not $keytool) {
