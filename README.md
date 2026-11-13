@@ -1,6 +1,6 @@
 # zdenoiva-auto
 
-Skript zapisuje vo webBox odchod z práce a ranný príchod. Beží na GitHub Actions,
+Skript zapisuje vo webBox odchod z práce. Beží na GitHub Actions,
 bez servera.
 
 ## Čo robí
@@ -38,10 +38,9 @@ ktorý sa len prihlási a vypíše stav, ale nič nezapíše.
 GitHub plánované behy spúšťa oneskorene (bežne 1–4 hodiny) a v public repe ich po
 60 dňoch bez aktivity potichu vypne. Preto sa dá workflow spúšťať zvonku:
 
-- `tools/nastav_cron.py` založí na cron-job.org tri úlohy — jednu, ktorá každý deň
-  o 03:00 workflow zapne (proti 60-dňovému vypnutiu), druhú, ktorá ho o 16:31 a 17:31
-  bratislavského času spustí cez API, a tretiu, ktorá v pracovné dni o 07:35 spustí
-  rannú kontrolu príchodu.
+- `tools/nastav_cron.py` založí na cron-job.org dve úlohy — jednu, ktorá každý deň
+  o 03:00 workflow zapne (proti 60-dňovému vypnutiu), a druhú, ktorá ho o 16:31 a 17:31
+  bratislavského času spustí cez API.
 
 Potrebné je vlastné fine-grained PAT (len tento repozitár, právo *Actions: Read and write*)
 a API kľúč z cron-job.org (*Settings → API key*):
@@ -58,28 +57,13 @@ Cron v `.github/workflows/auto.yml` zostáva ako záloha, keby externý spúšť
 
 ## Ranný príchod
 
-`prichod.py` v pracovný deň pred 7:45 skontroluje poslednú transakciu:
+Ranné pripomenutie rieši **Android appka** — v pracovný deň príde oznámenie *„Si v práci?“*
+a ťuknutie naň zapíše príchod. Beží celé v telefóne, bez servera.
 
-- Ak je to `Práca / Odchod` (príchod na dnes chýba), pošle mail s tlačidlom
-  *„Som v práci — zapíš príchod“*.
-- Ak je poslednou transakciou čokoľvek iné, nič nerobí a skončí.
-
-Klik na tlačidlo otvorí stránku na Cloudflare Workeri, ktorá spustí workflow
-`prichod.yml` v režime `record`; ten príchod zapíše a overí. Odkaz platí len do 9:30
-a len vtedy, keď je poslednou transakciou stále odchod.
-
-Potrebné secrety (okrem `USERNAME` a `PASSWORD`):
-
-| Secret | Význam |
-| --- | --- |
-| `CONFIRM_URL` | adresa Workera vrátane `?k=...`, ktorá ide do mailu |
-| `SMTP_USER` | adresa, z ktorej sa mail posiela (napr. Gmail) |
-| `SMTP_PASSWORD` | app password k tej adrese |
-| `MAIL_TO` | kam mail chodí (voliteľné, inak `SMTP_USER`) |
-| `SMTP_HOST`, `SMTP_PORT` | voliteľné, inak `smtp.gmail.com:465` |
-
-Samotný Worker je v `worker/prichod.js` — nasadenie a jeho dve premenné
-(`GH_TOKEN`, `SECRET`) sú popísané priamo v hlavičke toho súboru.
+Mailová verzia (Cloudflare Worker + odkaz v maily) bola zrušená: odkaz z mailu sa vedel
+otvoriť aj bez ťuknutia (prefetch v mailovom klientovi) a zapísal príchod aj vtedy, keď
+človek v práci nebol. Workflow `prichod.yml`, skript `prichod.py`, Worker aj secrety
+`CONFIRM_URL` / `SMTP_*` už neexistujú.
 
 ## Android appka
 

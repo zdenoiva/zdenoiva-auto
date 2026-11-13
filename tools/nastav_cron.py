@@ -37,7 +37,6 @@ for stream in (sys.stdout, sys.stderr):
 GITHUB_API = "https://api.github.com"
 REPO = "zdenoiva/zdenoiva-auto"
 WORKFLOW = "auto.yml"
-PRICHOD_WORKFLOW = "prichod.yml"
 CRON_API = "https://api.cron-job.org"
 
 
@@ -117,27 +116,11 @@ def ulohy(token):
                 "wdays": [-1],
             },
         },
-        {
-            "title": "webbox: ranna kontrola prichodu",
-            "url": f"{GITHUB_API}/repos/{REPO}/actions/workflows/{PRICHOD_WORKFLOW}/dispatches",
-            "requestMethod": 1,  # POST
-            "enabled": True,
-            "saveResponses": True,
-            "notification": notifikacia,
-            "extendedData": {
-                "headers": {**hlavicky, "Content-Type": "application/json"},
-                "body": json.dumps({"ref": "main", "inputs": {"mode": "check"}}),
-            },
-            "schedule": {
-                "timezone": "Europe/Bratislava",
-                "hours": [7],
-                "minutes": [35],
-                "mdays": [-1],
-                "months": [-1],
-                "wdays": [1, 2, 3, 4, 5],  # pondelok-piatok
-            },
-        },
     ]
+
+
+# Úlohy, ktoré už nepatria do nastavenia — skript ich pri spustení zmaže.
+ZASTARANE = {"webbox: ranna kontrola prichodu"}
 
 
 GITHUB_PREFIXES = ("ghp_", "github_pat_", "gho_", "ghu_", "ghs_", "ghr_")
@@ -228,6 +211,12 @@ def main():
                 f"{'OK' if ok else 'CHYBA'}: zalozene uloha '{nazov}' "
                 f"(HTTP {stav}{'' if ok else ': ' + str(odpoved)})"
             )
+
+    # zrušené úlohy (napr. ranný mail) zmazať
+    for nazov, cislo in existujuce.items():
+        if nazov in ZASTARANE:
+            stav, _ = request_retry("DELETE", f"{CRON_API}/jobs/{cislo}", cron)
+            print(f"{'OK' if stav == 200 else 'CHYBA'}: zmazana stara uloha '{nazov}' (HTTP {stav})")
 
     stav, zoznam = request("GET", f"{CRON_API}/jobs", cron)
     if stav == 200:
