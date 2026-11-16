@@ -131,6 +131,7 @@ public class MainActivity extends Activity {
         } else {
             web.loadUrl(START_URL);
             Planovac.naplanuj(this);
+            zvysPresneBudiky();
         }
 
         spracujZamer(getIntent());
@@ -173,6 +174,29 @@ public class MainActivity extends Activity {
             requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"},
                     ZIADOST_OZN);
         }
+    }
+
+    /**
+     * Bez povolenia „Budíky a pripomienky“ používa Android nepresný budík a v noci
+     * v spánku telefónu sa oznámenie vie posunúť aj o hodiny. Preto sa raz spýtame.
+     */
+    private void zvysPresneBudiky() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return;
+        if (Planovac.presnePovolene(this)) return;
+        if (prefy.getBoolean("presne_pytane", false)) return;
+        prefy.edit().putBoolean("presne_pytane", true).apply();
+
+        new AlertDialog.Builder(this)
+                .setTitle("Presné oznámenie")
+                .setMessage("Aby oznámenie „Si v práci?“ prišlo presne o nastavenom čase "
+                        + "a nie o hodinu neskôr, povoľ appke budíky a pripomienky.")
+                .setPositiveButton("Povoliť", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface d, int k) {
+                        Planovac.otvorPresneBudiky(MainActivity.this);
+                    }
+                })
+                .setNegativeButton("Neskôr", null)
+                .show();
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -493,6 +517,7 @@ public class MainActivity extends Activity {
                                 pokusovOPrihlasenie = 0;
                                 dialog.dismiss();
                                 Planovac.naplanuj(MainActivity.this);
+                                zvysPresneBudiky();
                                 web.loadUrl(START_URL);
                             }
                         });

@@ -26,6 +26,8 @@ public class Nastavenia extends Activity {
     private TimePicker cas;
     private CheckBox pracovne;
     private TextView najblizsie;
+    private TextView presne;
+    private Button povolitPresne;
 
     @Override
     protected void onCreate(Bundle stav) {
@@ -67,8 +69,22 @@ public class Nastavenia extends Activity {
 
         najblizsie = new TextView(this);
         najblizsie.setTextSize(14);
-        najblizsie.setPadding(0, 0, 0, (int) (20 * hustota));
+        najblizsie.setPadding(0, 0, 0, (int) (12 * hustota));
         box.addView(najblizsie);
+
+        presne = new TextView(this);
+        presne.setTextSize(13);
+        presne.setPadding(0, 0, 0, (int) (4 * hustota));
+        box.addView(presne);
+
+        povolitPresne = new Button(this);
+        povolitPresne.setText("Povoliť presné budíky");
+        povolitPresne.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Planovac.otvorPresneBudiky(Nastavenia.this);
+            }
+        });
+        box.addView(povolitPresne);
 
         Button ulozit = new Button(this);
         ulozit.setText("Uložiť");
@@ -107,6 +123,18 @@ public class Nastavenia extends Activity {
         cas.setEnabled(zap);
         pracovne.setEnabled(zap);
         najblizsie.setText(zap ? popisNajblizsieho() : "Oznámenie je vypnuté.");
+
+        boolean presneOk = Planovac.presnePovolene(this);
+        presne.setText(presneOk
+                ? "Presné budíky: povolené"
+                : "Presné budíky: nepovolené — oznámenie môže prísť neskôr");
+        povolitPresne.setVisibility(presneOk ? View.GONE : View.VISIBLE);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (najblizsie != null) obnov();
     }
 
     private String popisNajblizsieho() {

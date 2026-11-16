@@ -12,6 +12,9 @@ prihlasovacie údaje, aby sa prihlásila sama.
 - **Nastavenia** (menu ⋮): oznámenie zapnúť/vypnúť, nastaviť čas a zapnúť
   *„Len v pracovné dni“* — vtedy sa vynechajú víkendy aj slovenské štátne sviatky
   vrátane Veľkého piatku a Veľkonočného pondelka. Predvolene 07:35, len pracovné dni.
+- **Presné oznámenie**: appka si pri prvom použití vypýta povolenie *Budíky a pripomienky*
+  (`SCHEDULE_EXACT_ALARM`). Bez neho Android použije nepresný budík a v noci v spánku
+  telefónu sa oznámenie vie posunúť aj o hodiny. Stav je vidieť v Nastaveniach.
 - **Sviatky z GitHubu**: zoznam sa raz za týždeň ťahá zo súboru `sviatky.json`
   v tomto repe, takže keď sa sviatky zmenia zákonom, stačí upraviť ten súbor —
   netreba novú verziu appky. Kým zoznam pre daný rok chýba, počíta sa vstaveným
