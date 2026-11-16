@@ -171,9 +171,19 @@ def zapis_transakciu(driver, ciel):
         driver.execute_script("arguments[0].click();", tlacidlo)
 
     potvrdenie = WebDriverWait(driver, 15).until(
-        EC.element_to_be_clickable((By.ID, "rdr-confirm-btn"))
+        EC.presence_of_element_located((By.ID, "rdr-confirm-btn"))
     )
-    potvrdenie.click()
+    # Modal sa po kliknutí ešte dorovnáva a jeho podklad (div.fixed-body) vie
+    # potvrdenie prekryť — vtedy Selenium klik odmietne. Preto najprv chvíľu
+    # počkať, a keď to nevyjde, kliknúť cez JavaScript.
+    time.sleep(1)
+    try:
+        WebDriverWait(driver, 8).until(
+            EC.element_to_be_clickable((By.ID, "rdr-confirm-btn"))
+        ).click()
+    except Exception as chyba:
+        log(f"⚠️ Klik na potvrdenie zlyhal ({type(chyba).__name__}), skúšam JS klik.")
+        driver.execute_script("arguments[0].click();", potvrdenie)
     log("✅ Potvrdené, čakám na zápis v systéme...")
 
     dnes = datetime.now(TZ).date()
