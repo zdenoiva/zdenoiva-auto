@@ -28,7 +28,7 @@ final class Sviatky {
             "https://raw.githubusercontent.com/zdenoiva/zdenoiva-auto/main/android/sviatky.json";
     private static final String K_JSON = "sviatky_json";
     private static final String K_CAS = "sviatky_cas";
-    private static final long PLATNOST = 7L * 24 * 60 * 60 * 1000; // týždeň
+    private static final long PLATNOST = 24L * 60 * 60 * 1000; // deň
 
     private static JSONObject cache;
 
@@ -119,7 +119,6 @@ final class Sviatky {
         if (m == 9 && d == 1) return true;    // Deň Ústavy SR
         if (m == 9 && d == 15) return true;   // Sedembolestná Panna Mária
         if (m == 11 && d == 1) return true;   // Sviatok všetkých svätých
-        if (m == 11 && d == 17) return true;  // Deň boja za slobodu a demokraciu
         if (m == 12 && d == 24) return true;  // Štedrý deň
         if (m == 12 && d == 25) return true;  // Prvý sviatok vianočný
         if (m == 12 && d == 26) return true;  // Druhý sviatok vianočný
