@@ -129,6 +129,10 @@ public class MainActivity extends Activity {
         if (prefy.getString("meno", "").isEmpty()) {
             vyziadajUdaje();
         } else {
+            // Stará session mohla vzniknúť ako webBox (PC rozhranie). Prihlásime sa
+            // nanovo, aby web dal mobilnú verziu (webReader).
+            CookieManager.getInstance().removeAllCookies(null);
+            CookieManager.getInstance().flush();
             web.loadUrl(START_URL);
             Planovac.naplanuj(this);
             zvysPresneBudiky();

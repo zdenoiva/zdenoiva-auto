@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.widget.Toast;
 
 import org.json.JSONObject;
@@ -66,8 +67,18 @@ final class Aktualizacie {
 
                         JSONObject vydanie = new JSONObject(text.toString());
                         tag = vydanie.optString("tag_name", "");
-                        // Odkaz na stránku vydania — appka sama nič nestahuje ani neinštaluje.
-                        url = vydanie.optString("html_url", "");
+                        // Priamy odkaz na APK z vydania (appka ho stiahne a ponúkne inštaláciu).
+                        org.json.JSONArray assety = vydanie.optJSONArray("assets");
+                        if (assety != null) {
+                            for (int i = 0; i < assety.length(); i++) {
+                                JSONObject asset = assety.optJSONObject(i);
+                                if (asset != null
+                                        && "Dochadzka.apk".equals(asset.optString("name"))) {
+                                    url = asset.optString("browser_download_url");
+                                }
+                            }
+                        }
+                        if (url == null || url.isEmpty()) url = vydanie.optString("html_url", "");
                         p.edit().putLong(K_CAS, System.currentTimeMillis()).apply();
                     }
                 } catch (Exception e) {
@@ -112,17 +123,104 @@ final class Aktualizacie {
         final String ciel = url;
         new AlertDialog.Builder(aktivita)
                 .setTitle("Dostupná verzia " + najnovsia)
-                .setMessage("V appke máš " + teraz + ". Po stiahnutí sa Android spýta "
-                        + "na potvrdenie inštalácie; údaje aj nastavenia ostanú.")
-                .setPositiveButton("Otvoriť GitHub", new DialogInterface.OnClickListener() {
+                .setMessage("V appke máš " + teraz + ". Appka ju stiahne a hneď ponúkne "
+                        + "inštaláciu; údaje aj nastavenia ostanú.")
+                .setPositiveButton("Stiahnuť a nainštalovať", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int ktore) {
                         if (ciel != null && !ciel.isEmpty()) {
-                            aktivita.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(ciel)));
+                            stiahniAInstaluj(aktivita, ciel);
                         }
                     }
                 })
                 .setNegativeButton("Neskôr", null)
                 .show();
+    }
+
+    /** Stiahne APK a po dokončení ponúkne systémovú inštaláciu. */
+    static void stiahniAInstaluj(final Activity aktivita, final String adresa) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                && !aktivita.getPackageManager().canRequestPackageInstalls()) {
+            new AlertDialog.Builder(aktivita)
+                    .setTitle("Povoliť inštaláciu")
+                    .setMessage("Android potrebuje povolenie, aby appka mohla nainštalovať "
+                            + "svoju novú verziu. Zapni „Povoliť z tohto zdroja“ a skús to znova.")
+                    .setPositiveButton("Povoliť", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int ktore) {
+                            try {
+                                aktivita.startActivity(new Intent(
+                                        android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                                        Uri.parse("package:" + aktivita.getPackageName())));
+                            } catch (Exception e) {
+                                Toast.makeText(aktivita, "Nastavenie sa nepodarilo otvoriť",
+                                        Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    })
+                    .setNegativeButton("Zrušiť", null)
+                    .show();
+            return;
+        }
+
+        final android.app.DownloadManager spravca =
+                (android.app.DownloadManager) aktivita.getSystemService(Context.DOWNLOAD_SERVICE);
+        if (spravca == null) return;
+
+        android.app.DownloadManager.Request poziadavka =
+                new android.app.DownloadManager.Request(Uri.parse(adresa));
+        poziadavka.setTitle("Dochádzka");
+        poziadavka.setDescription("Nová verzia appky");
+        poziadavka.setNotificationVisibility(
+                android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+        poziadavka.setDestinationInExternalFilesDir(aktivita,
+                android.os.Environment.DIRECTORY_DOWNLOADS, "Dochadzka.apk");
+
+        final long id;
+        try {
+            id = spravca.enqueue(poziadavka);
+        } catch (Exception e) {
+            Toast.makeText(aktivita, "Stiahnutie sa nepodarilo spustiť", Toast.LENGTH_LONG).show();
+            return;
+        }
+        Toast.makeText(aktivita, "Sťahujem novú verziu…", Toast.LENGTH_SHORT).show();
+
+        final android.os.Handler hlavny = new android.os.Handler(
+                android.os.Looper.getMainLooper());
+        final Runnable[] krok = new Runnable[1];
+        krok[0] = new Runnable() {
+            public void run() {
+                android.database.Cursor kurzor = spravca.query(
+                        new android.app.DownloadManager.Query().setFilterById(id));
+                int stav = -1;
+                if (kurzor != null) {
+                    if (kurzor.moveToFirst()) {
+                        stav = kurzor.getInt(kurzor.getColumnIndex(
+                                android.app.DownloadManager.COLUMN_STATUS));
+                    }
+                    kurzor.close();
+                }
+
+                if (stav == android.app.DownloadManager.STATUS_SUCCESSFUL) {
+                    Uri subor = spravca.getUriForDownloadedFile(id);
+                    Intent instalacia = new Intent(Intent.ACTION_VIEW)
+                            .setDataAndType(subor, "application/vnd.android.package-archive")
+                            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                    | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    try {
+                        aktivita.startActivity(instalacia);
+                    } catch (Exception e) {
+                        Toast.makeText(aktivita, "Inštaláciu sa nepodarilo otvoriť",
+                                Toast.LENGTH_LONG).show();
+                    }
+                    return;
+                }
+                if (stav == android.app.DownloadManager.STATUS_FAILED) {
+                    Toast.makeText(aktivita, "Stiahnutie zlyhalo", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                hlavny.postDelayed(krok[0], 1500);
+            }
+        };
+        hlavny.postDelayed(krok[0], 1500);
     }
 
     private static boolean jeNovsia(String nova, String teraz) {
