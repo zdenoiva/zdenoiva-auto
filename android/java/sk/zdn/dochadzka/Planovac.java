@@ -17,6 +17,7 @@ final class Planovac {
     static final String K_HODINA = "oznam_hodina";
     static final String K_MINUTA = "oznam_minuta";
     static final String K_PRACOVNE = "oznam_pracovne";
+    static final String K_SVIATKY = "oznam_sviatky";
 
     static final int HODINA = 7;
     static final int MINUTA = 35;
@@ -44,6 +45,10 @@ final class Planovac {
         return prefs(kontext).getBoolean(K_PRACOVNE, true);
     }
 
+    static boolean vynechatSviatky(Context kontext) {
+        return prefs(kontext).getBoolean(K_SVIATKY, true);
+    }
+
     private static PendingIntent cakanie(Context kontext) {
         Intent zamer = new Intent(kontext, Budik.class);
         return PendingIntent.getBroadcast(
@@ -60,7 +65,8 @@ final class Planovac {
 
         if (!zapnute(kontext)) return;
 
-        long kedy = najblizsiCas(hodina(kontext), minuta(kontext), lenPracovne(kontext));
+        long kedy = najblizsiCas(hodina(kontext), minuta(kontext),
+                lenPracovne(kontext), vynechatSviatky(kontext));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && budik.canScheduleExactAlarms()) {
             budik.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, kedy, poziadavka);
         } else {
@@ -88,7 +94,7 @@ final class Planovac {
         }
     }
 
-    static long najblizsiCas(int hodina, int minuta, boolean lenPracovne) {
+    static long najblizsiCas(int hodina, int minuta, boolean lenPracovne, boolean vynechatSviatky) {
         Calendar cas = Calendar.getInstance();
         cas.set(Calendar.HOUR_OF_DAY, hodina);
         cas.set(Calendar.MINUTE, minuta);
@@ -98,16 +104,16 @@ final class Planovac {
             cas.add(Calendar.DAY_OF_YEAR, 1);
         }
         int poistka = 0;
-        while (!vhodnyDen(cas, lenPracovne) && poistka++ < 400) {
+        while (!vhodnyDen(cas, lenPracovne, vynechatSviatky) && poistka++ < 400) {
             cas.add(Calendar.DAY_OF_YEAR, 1);
         }
         return cas.getTimeInMillis();
     }
 
-    static boolean vhodnyDen(Calendar cas, boolean lenPracovne) {
+    static boolean vhodnyDen(Calendar cas, boolean lenPracovne, boolean vynechatSviatky) {
         if (!lenPracovne) return true;
         int den = cas.get(Calendar.DAY_OF_WEEK);
         if (den == Calendar.SATURDAY || den == Calendar.SUNDAY) return false;
-        return !Sviatky.jeSviatok(cas);
+        return !vynechatSviatky || !Sviatky.jeSviatok(cas);
     }
 }

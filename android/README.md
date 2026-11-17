@@ -9,9 +9,10 @@ prihlasovacie údaje, aby sa prihlásila sama.
 - **Ranné oznámenie**: v pracovný deň o 07:35 príde oznámenie *„Si v práci?“* s tlačidlom
   *Zapíš príchod*. Appka pri ťuknutí skontroluje poslednú transakciu a zapíše príchod len
   vtedy, keď je poslednou transakciou odchod. Ak už príchod máš, len to oznámi.
-- **Nastavenia** (menu ⋮): oznámenie zapnúť/vypnúť, nastaviť čas a zapnúť
-  *„Len v pracovné dni“* — vtedy sa vynechajú víkendy aj slovenské štátne sviatky
-  vrátane Veľkého piatku a Veľkonočného pondelka. Predvolene 07:35, len pracovné dni.
+- **Nastavenia** (menu ⋮): oznámenie zapnúť/vypnúť, nastaviť čas, *„Len v pracovné dni“*
+  (vynechať víkendy) a *„Vynechať aj slovenské sviatky“* — sviatky vrátane Veľkého piatku
+  a Veľkonočného pondelka sa dajú nechať zapnuté, ak sa v tie dni chodí do práce.
+  Predvolene 07:35, víkendy aj sviatky vynechané.
 - **Presné oznámenie**: appka si pri prvom použití vypýta povolenie *Budíky a pripomienky*
   (`SCHEDULE_EXACT_ALARM`). Bez neho Android použije nepresný budík a v noci v spánku
   telefónu sa oznámenie vie posunúť aj o hodiny. Stav je vidieť v Nastaveniach.

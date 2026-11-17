@@ -335,6 +335,9 @@ public class MainActivity extends Activity {
         String js = "(function(){"
                 + "var u=document.getElementById('username'),p=document.getElementById('password');"
                 + "if(!u||!p)return 0;"
+                // mobilné rozhranie webReader (inak web ukáže PC verziu)
+                + "var r=document.querySelector(\"input[name='_loginto'][value='webreader']\");"
+                + "if(r&&!r.checked){r.checked=true;r.dispatchEvent(new Event('change',{bubbles:true}));}"
                 + "u.value=" + JSONObject.quote(meno) + ";"
                 + "p.value=" + JSONObject.quote(heslo) + ";"
                 + "u.dispatchEvent(new Event('input',{bubbles:true}));"

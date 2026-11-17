@@ -25,6 +25,7 @@ public class Nastavenia extends Activity {
     private Switch zapnute;
     private TimePicker cas;
     private CheckBox pracovne;
+    private CheckBox sviatky;
     private TextView najblizsie;
     private TextView presne;
     private Button povolitPresne;
@@ -61,11 +62,18 @@ public class Nastavenia extends Activity {
         box.addView(cas);
 
         pracovne = new CheckBox(this);
-        pracovne.setText("Len v pracovné dni (vynechať víkendy a slovenské sviatky)");
+        pracovne.setText("Len v pracovné dni (vynechať víkendy)");
         pracovne.setTextSize(15);
         pracovne.setChecked(Planovac.lenPracovne(this));
-        pracovne.setPadding(0, (int) (12 * hustota), 0, (int) (12 * hustota));
+        pracovne.setPadding(0, (int) (12 * hustota), 0, (int) (2 * hustota));
         box.addView(pracovne);
+
+        sviatky = new CheckBox(this);
+        sviatky.setText("Vynechať aj slovenské sviatky");
+        sviatky.setTextSize(15);
+        sviatky.setChecked(Planovac.vynechatSviatky(this));
+        sviatky.setPadding((int) (24 * hustota), 0, 0, (int) (12 * hustota));
+        box.addView(sviatky);
 
         najblizsie = new TextView(this);
         najblizsie.setTextSize(14);
@@ -109,6 +117,11 @@ public class Nastavenia extends Activity {
                 obnov();
             }
         });
+        sviatky.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton b, boolean zap) {
+                obnov();
+            }
+        });
         cas.setOnTimeChangedListener(new TimePicker.OnTimeChangedListener() {
             public void onTimeChanged(TimePicker p, int hodina, int minuta) {
                 obnov();
@@ -122,6 +135,7 @@ public class Nastavenia extends Activity {
         boolean zap = zapnute.isChecked();
         cas.setEnabled(zap);
         pracovne.setEnabled(zap);
+        sviatky.setEnabled(zap && pracovne.isChecked());
         najblizsie.setText(zap ? popisNajblizsieho() : "Oznámenie je vypnuté.");
 
         boolean presneOk = Planovac.presnePovolene(this);
@@ -138,7 +152,8 @@ public class Nastavenia extends Activity {
     }
 
     private String popisNajblizsieho() {
-        long kedy = Planovac.najblizsiCas(cas.getHour(), cas.getMinute(), pracovne.isChecked());
+        long kedy = Planovac.najblizsiCas(cas.getHour(), cas.getMinute(),
+                pracovne.isChecked(), sviatky.isChecked());
         Calendar c = Calendar.getInstance();
         c.setTimeInMillis(kedy);
         int den = c.get(Calendar.DAY_OF_WEEK) - 1;
@@ -154,6 +169,7 @@ public class Nastavenia extends Activity {
                 .putInt(Planovac.K_HODINA, cas.getHour())
                 .putInt(Planovac.K_MINUTA, cas.getMinute())
                 .putBoolean(Planovac.K_PRACOVNE, pracovne.isChecked())
+                .putBoolean(Planovac.K_SVIATKY, sviatky.isChecked())
                 .apply();
 
         Planovac.naplanuj(this);
