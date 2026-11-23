@@ -16,6 +16,8 @@ import android.widget.Toast;
 public class Mapa extends Activity {
 
     private WebView web;
+    private final android.os.Handler hlavny =
+            new android.os.Handler(android.os.Looper.getMainLooper());
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -53,7 +55,28 @@ public class Mapa extends Activity {
                 if (Poloha.maMiesto(Mapa.this)) {
                     web.evaluateJavascript("nastavBod(" + Poloha.lat(Mapa.this) + ","
                             + Poloha.lon(Mapa.this) + ",16)", null);
+                    return;
                 }
+                // miesto ešte nie je uložené — vycentruj mapu na aktuálnu polohu
+                if (!Poloha.maPovolenie(Mapa.this)) return;
+                new Thread(new Runnable() {
+                    public void run() {
+                        final android.location.Location l = Poloha.zisti(Mapa.this, 15000);
+                        hlavny.post(new Runnable() {
+                            public void run() {
+                                if (web == null) return;
+                                if (l != null) {
+                                    web.evaluateJavascript("nastavBod(" + l.getLatitude()
+                                            + "," + l.getLongitude() + ",17)", null);
+                                } else {
+                                    Toast.makeText(Mapa.this,
+                                            "Polohu sa nepodarilo zistiť — nájdi miesto ručne",
+                                            Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        });
+                    }
+                }).start();
             }
         });
 
