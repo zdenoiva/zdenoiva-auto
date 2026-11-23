@@ -3,6 +3,7 @@ package sk.zdn.dochadzka;
 import android.app.Activity;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -29,6 +30,8 @@ public class Nastavenia extends Activity {
     private TextView najblizsie;
     private TextView presne;
     private Button povolitPresne;
+    private TextView poloha;
+    private Button povolitPolohu;
 
     @Override
     protected void onCreate(Bundle stav) {
@@ -94,6 +97,42 @@ public class Nastavenia extends Activity {
         });
         box.addView(povolitPresne);
 
+        poloha = new TextView(this);
+        poloha.setTextSize(13);
+        poloha.setPadding(0, (int) (16 * hustota), 0, (int) (4 * hustota));
+        box.addView(poloha);
+
+        Button povolitPolohu = new Button(this);
+        povolitPolohu.setText("Povoliť polohu");
+        povolitPolohu.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (!Poloha.maPovolenie(Nastavenia.this)) {
+                    requestPermissions(new String[]{"android.permission.ACCESS_FINE_LOCATION"}, 21);
+                } else {
+                    // poloha „vždy“ sa v Androide 11+ zapína len v nastaveniach appky
+                    try {
+                        startActivity(new Intent(
+                                android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                android.net.Uri.parse("package:" + getPackageName())));
+                    } catch (Exception e) {
+                        Toast.makeText(Nastavenia.this, "Nastavenie sa nepodarilo otvoriť",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        });
+        box.addView(povolitPolohu);
+        this.povolitPolohu = povolitPolohu;
+
+        Button mapa = new Button(this);
+        mapa.setText("Vybrať miesto práce na mape");
+        mapa.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                startActivity(new Intent(Nastavenia.this, Mapa.class));
+            }
+        });
+        box.addView(mapa);
+
         Button ulozit = new Button(this);
         ulozit.setText("Uložiť");
         ulozit.setOnClickListener(new View.OnClickListener() {
@@ -143,6 +182,22 @@ public class Nastavenia extends Activity {
                 ? "Presné budíky: povolené"
                 : "Presné budíky: nepovolené — oznámenie môže prísť neskôr");
         povolitPresne.setVisibility(presneOk ? View.GONE : View.VISIBLE);
+
+        boolean polohaOk = Poloha.maPovolenie(this);
+        boolean miestoOk = Poloha.maMiesto(this);
+        boolean vzdyOk = Poloha.maPolohuVzdy(this);
+        if (!polohaOk) {
+            poloha.setText("Poloha: nepovolená — appka nemôže overiť, či si v práci.");
+        } else if (!vzdyOk) {
+            poloha.setText("Poloha: povolená len pri používaní. Pre rannú kontrolu "
+                    + "ju nastav na „Vždy“.");
+        } else if (!miestoOk) {
+            poloha.setText("Poloha: povolená. Miesto práce ešte nie je vybrané.");
+        } else {
+            poloha.setText("Poloha: povolená vždy. Miesto práce uložené, okruh "
+                    + (int) Poloha.OKRUH_METROV + " m.");
+        }
+        povolitPolohu.setVisibility(vzdyOk ? View.GONE : View.VISIBLE);
     }
 
     @Override
@@ -177,7 +232,7 @@ public class Nastavenia extends Activity {
         if (!zap) {
             NotificationManager spravca =
                     (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            if (spravca != null) spravca.cancel(Budik.OZN_DEN);
+            if (spravca != null) spravca.cancel(Oznamy.OZN_DEN);
         }
 
         Toast.makeText(this,

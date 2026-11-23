@@ -68,7 +68,13 @@ final class Planovac {
         long kedy = najblizsiCas(hodina(kontext), minuta(kontext),
                 lenPracovne(kontext), vynechatSviatky(kontext));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && budik.canScheduleExactAlarms()) {
-            budik.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, kedy, poziadavka);
+            // setAlarmClock je presný, obchádza Doze a Android dovolí appke spustiť
+            // službu na pozadí — bez toho by sa poloha nedala overiť.
+            Intent otvor = new Intent(kontext, MainActivity.class);
+            PendingIntent ukaz = PendingIntent.getActivity(
+                    kontext, 5, otvor,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            budik.setAlarmClock(new AlarmManager.AlarmClockInfo(kedy, ukaz), poziadavka);
         } else {
             // Bez presnej výnimky — systém to môže o pár minút posunúť, ale oznámenie príde.
             budik.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, kedy, poziadavka);

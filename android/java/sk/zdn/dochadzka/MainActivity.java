@@ -122,6 +122,7 @@ public class MainActivity extends Activity {
 
         nastavWeb();
         zvysPovolenieOznameni();
+        zvysPovoleniePolohy();
 
         Sviatky.nacitaj(this);
         Sviatky.obnov(this, false);
@@ -177,6 +178,14 @@ public class MainActivity extends Activity {
                 != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"},
                     ZIADOST_OZN);
+        }
+    }
+
+    /** Poloha — podľa nej sa appka rozhoduje, či si v práci. */
+    private void zvysPovoleniePolohy() {
+        if (checkSelfPermission("android.permission.ACCESS_FINE_LOCATION")
+                != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{"android.permission.ACCESS_FINE_LOCATION"}, 21);
         }
     }
 
@@ -456,7 +465,7 @@ public class MainActivity extends Activity {
     private void zrusOznam() {
         NotificationManager spravca =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        if (spravca != null) spravca.cancel(Budik.OZN_DEN);
+        if (spravca != null) spravca.cancel(Oznamy.OZN_DEN);
     }
 
     /** Chybová hláška — dovolí, aby sa to isté oznámenie dalo skúsiť znova. */

@@ -13,9 +13,11 @@ prihlasovacie údaje, aby sa prihlásila sama.
   (vynechať víkendy) a *„Vynechať aj slovenské sviatky“* — sviatky vrátane Veľkého piatku
   a Veľkonočného pondelka sa dajú nechať zapnuté, ak sa v tie dni chodí do práce.
   Predvolene 07:35, víkendy aj sviatky vynechané.
-- **Presné oznámenie**: appka si pri prvom použití vypýta povolenie *Budíky a pripomienky*
-  (`SCHEDULE_EXACT_ALARM`). Bez neho Android použije nepresný budík a v noci v spánku
-  telefónu sa oznámenie vie posunúť aj o hodiny. Stav je vidieť v Nastaveniach.
+- **Automatický zápis podľa polohy**: v Nastaveniach sa vyberie miesto práce na mape
+  (OpenStreetMap). Keď v čase oznámenia appka zistí, že si do **70 m** od neho, prihlási
+  sa na pozadí a príchod zapíše sama — príde len oznámenie „✅ Príchod do práce zapísaný“.
+  Ak poloha nesedí (alebo sa ju nepodarí zistiť), správa sa ako doteraz: oznámenie
+  „Si v práci?“ s tlačidlom.
 - **Sviatky z GitHubu**: zoznam sa raz za týždeň ťahá zo súboru `sviatky.json`
   v tomto repe, takže keď sa sviatky zmenia zákonom, stačí upraviť ten súbor —
   netreba novú verziu appky. Kým zoznam pre daný rok chýba, počíta sa vstaveným
@@ -34,8 +36,12 @@ prihlasovacie údaje, aby sa prihlásila sama.
 - `INTERNET` — jediné, ktoré appka naozaj potrebuje.
 - `POST_NOTIFICATIONS` — kvôli rannému oznámeniu (Android 13+ sa naň raz spýta).
 - `RECEIVE_BOOT_COMPLETED` — aby sa oznámenie po reštarte naplánovalo znova (bez otázky).
+- `ACCESS_FINE_LOCATION` (+ `ACCESS_BACKGROUND_LOCATION`) — na overenie, či si v práci.
+  V systéme ju treba povoliť ako **„Vždy“**, inak Android polohu v čase budíka nepustí.
+- `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_LOCATION` — krátka služba, ktorá polohu zistí.
+- `REQUEST_INSTALL_PACKAGES` — aby appka vedela ponúknuť inštaláciu vlastnej aktualizácie.
 
-Kameru, mikrofón, polohu ani súbory appka nemá. WebView dostane také požiadavky **rovno
+Kameru, mikrofón ani súbory appka nemá. WebView dostane také požiadavky **rovno
 zamietnuté a potichu** — nikdy sa nezobrazí systémové okno ani hláška.
 
 ## Stavba APK
