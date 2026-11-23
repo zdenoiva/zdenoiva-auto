@@ -71,7 +71,16 @@ public class PrichodService extends Service {
 
     @Override
     public int onStartCommand(Intent zamer, int flags, int startId) {
-        startForeground(Oznamy.OZN_SLUZBA, Oznamy.sluzba(this, "Zisťujem polohu…"));
+        // kanály musia existovať skôr, než sa pokúsime o popredné oznámenie
+        Oznamy.pripravKanaly(this);
+        try {
+            startForeground(Oznamy.OZN_SLUZBA, Oznamy.sluzba(this, "Zisťujem polohu…"));
+        } catch (Exception chyba) {
+            // napr. Android nepovolí poprednú službu alebo chýba povolenie polohy
+            Oznamy.siVPraci(this);
+            stopSelf();
+            return START_NOT_STICKY;
+        }
 
         new Thread(new Runnable() {
             public void run() {
@@ -107,7 +116,13 @@ public class PrichodService extends Service {
             return;
         }
 
-        web = new WebView(getApplicationContext());
+        try {
+            web = new WebView(getApplicationContext());
+        } catch (Exception chyba) {
+            // na niektorých zariadeniach sa WebView mimo okna nedá vytvoriť
+            padlo();
+            return;
+        }
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -168,7 +183,7 @@ public class PrichodService extends Service {
                         }
                     }, 900);
                 } else if ("uz".equals(stav)) {
-                    uspech("Príchod už bol zapísaný.");
+                    uspech("Príchod už bol zapísaný.", false);
                 } else if ("ine".equals(stav) && pokusov > 8) {
                     padlo();
                 } else {
@@ -209,7 +224,7 @@ public class PrichodService extends Service {
             public void onReceiveValue(String hodnota) {
                 String text = dekoduj(hodnota);
                 if (text.contains("Príchod")) {
-                    uspech(text);
+                    uspech(text, true);
                 } else if (zostava > 0) {
                     hlavny.postDelayed(new Runnable() {
                         public void run() {
@@ -223,14 +238,18 @@ public class PrichodService extends Service {
         });
     }
 
-    private void uspech(String detail) {
+    private void uspech(String detail, boolean zapisaneTeraz) {
         if (hotovo) return;
         hotovo = true;
         Calendar teraz = Calendar.getInstance();
         String cas = String.format("%02d:%02d", teraz.get(Calendar.HOUR_OF_DAY),
                 teraz.get(Calendar.MINUTE));
-        Oznamy.sprava(this, "✅ Príchod do práce zapísaný",
-                "webBox potvrdil príchod o " + cas + ".");
+        if (zapisaneTeraz) {
+            Oznamy.sprava(this, "✅ Príchod do práce zapísaný",
+                    "webBox potvrdil príchod o " + cas + ".");
+        } else {
+            Oznamy.sprava(this, "Príchod už je zapísaný", detail);
+        }
         skonci();
     }
 

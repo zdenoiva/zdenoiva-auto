@@ -113,6 +113,7 @@ public class MainActivity extends Activity {
         super.onCreate(stav);
 
         prefy = getSharedPreferences("dochadzka", MODE_PRIVATE);
+        Oznamy.pripravKanaly(this);
 
         FrameLayout koren = new FrameLayout(this);
         web = new WebView(this);
